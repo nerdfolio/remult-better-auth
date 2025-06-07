@@ -20,6 +20,7 @@
    },
    "devDependencies": {
       "@biomejs/biome": "^1.9.4",
+      "@types/node": "^22.15.30",
       "better-auth": "^1.2.8",
       "drizzle-orm": "^0.43.1",
       "remult": "^3.0.4",

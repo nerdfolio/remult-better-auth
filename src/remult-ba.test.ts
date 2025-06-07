@@ -2,7 +2,7 @@ import { runAdapterTest } from "better-auth/adapters/test"
 import { InMemoryDataProvider, Remult } from "remult"
 import { afterAll, describe } from "vitest"
 import * as authSchema from "./auth-schema"
-import { remultAdapter } from "./ba-remult"
+import { remultAdapter } from "./remult-ba"
 
 describe("remult-better-auth adapter tests", async () => {
 	// const _api = remultApi({
