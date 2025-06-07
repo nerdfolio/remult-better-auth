@@ -1,0 +1,36 @@
+{
+	"name": "@nerdfolio/remult-better-auth",
+	"version": "0.0.1",
+	"description": "Remult ORM adapter for better-auth",
+	"license": "ISC",
+	"author": "taivo",
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"keywords": [],
+	"type": "module",
+	"scripts": {
+		"generate-schema": "tsx ./src/generate-schema-cli.ts"
+	},
+	"packageManager": "pnpm@10.10.0",
+	"engines": {
+		"node": ">=22",
+		"pnpm": ">=10"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"better-auth": "^1.2.8",
+		"drizzle-orm": "^0.43.1",
+		"remult": "^3.0.4",
+		"surrealdb": "^1.3.2",
+		"tsup": "^8.5.0",
+		"tsx": "^4.19.4",
+		"vitest": "^3.2.2"
+	},
+	"peerDependencies": {
+		"better-auth": "^1.2.8",
+		"drizzle-orm": "^0.43.1",
+		"remult": "^3.0.4",
+		"surrealdb": "^1.3.2"
+	}
+}
