@@ -136,3 +136,4 @@ dist
 .pnp.*
 
 db/auth-schema.ts
+zztemp

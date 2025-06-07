@@ -22,17 +22,13 @@
       "@biomejs/biome": "^1.9.4",
       "@types/node": "^22.15.30",
       "better-auth": "^1.2.8",
-      "drizzle-orm": "^0.43.1",
       "remult": "^3.0.4",
-      "surrealdb": "^1.3.2",
       "tsup": "^8.5.0",
       "tsx": "^4.19.4",
       "vitest": "^3.2.2"
    },
    "peerDependencies": {
       "better-auth": "^1.2.8",
-      "drizzle-orm": "^0.43.1",
-      "remult": "^3.0.4",
-      "surrealdb": "^1.3.2"
+      "remult": "^3.0.4"
    }
 }

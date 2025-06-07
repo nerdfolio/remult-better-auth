@@ -1,6 +1,6 @@
 import { BetterAuthError } from "better-auth"
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, SqlDatabase, repo } from "remult"
+import { type ClassType, type Remult, SqlDatabase } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
 
@@ -13,7 +13,7 @@ export interface RemultAdapterOptions {
 	debugLogs?: AdapterDebugLogs
 }
 
-export function remultAdapter(adapterCfg: RemultAdapterOptions) {
+export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) {
 	function getEntityClass(modelName: string) {
 		// NOTE: should request the entityInfo_key Symbol be exported by remult
 		const keySymbol = Symbol.for("entityInfo_key")
@@ -29,7 +29,7 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 	}
 
 	function getRepo(modelName: string) {
-		return repo(getEntityClass(modelName))
+		return remult.repo(getEntityClass(modelName))
 	}
 
 	return createAdapter({
@@ -38,7 +38,7 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 			adapterName: "Remult Adapter",
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
-		adapter: () => {
+		adapter: ({ debugLog }) => {
 			return {
 				async createSchema({ file, tables }) {
 					return {
@@ -49,10 +49,12 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 				},
 				async create({ model, data: values }) {
 					const modelRepo = getRepo(model)
-					const entity = await modelRepo.create(values) as Record<string, unknown>
-					return entity.id
+					return modelRepo.create(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
+					console.log("FIND ONE___", "model", model, "where", where)
+					console.log("FIND ONE___", "converted where:", convertWhereClause(where))
+					debugLog("findOne:::::::::::::", { model, where })
 					const modelRepo = getRepo(model)
 					return modelRepo.findOne({
 						where: convertWhereClause(where),
