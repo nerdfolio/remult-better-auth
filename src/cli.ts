@@ -37,7 +37,11 @@ async function generateSchema({
 async function main() {
 	await setTimeout(1) // so that all the node import warnings get printed first
 
-	const [file] = process.argv.slice(2)
+	const [command, file] = process.argv.slice(2)
+	if (command !== "generate") {
+		throw new Error(`Unknown command: ${command}. Currently only "generate output-path" is supported. If output-path is not specified, it defaults to "./auth-schema.ts"`)
+	}
+
 	generateRemultSchema({ options: {}, file })
 }
 
