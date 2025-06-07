@@ -11,6 +11,7 @@
    "type": "module",
    "scripts": {
       "test": "vitest run",
+			"why-no-json": "tsx src/why-no-json",
       "generate": "tsx ./src/cli.ts generate"
    },
    "packageManager": "pnpm@10.10.0",

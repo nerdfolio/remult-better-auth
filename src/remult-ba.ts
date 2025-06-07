@@ -1,6 +1,6 @@
 import { BetterAuthError } from "better-auth"
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type Remult, SqlDatabase } from "remult"
+import { type ClassType, Entity, type Remult, SqlDatabase } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
 
@@ -17,14 +17,15 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 	function getEntityClass(modelName: string) {
 		// NOTE: should request the entityInfo_key Symbol be exported by remult
 		const keySymbol = Symbol.for("entityInfo_key")
-		console.log("adapterCfg", adapterCfg)
 		const entityClass = Object.values(adapterCfg.authEntities).find((ent) => ent[keySymbol] === modelName)
+
 
 		if (!entityClass) {
 			throw new BetterAuthError(
 				`The model "${modelName}" was not found in the authEntities object. Please pass the authEntities directly to the adapter options.`
 			)
 		}
+
 		return entityClass
 	}
 
