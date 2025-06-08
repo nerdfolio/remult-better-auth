@@ -1,7 +1,8 @@
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import type { ClassType, Remult } from "remult"
+import type { ClassType, ErrorInfo, Remult } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
+import { RemultBetterAuthError } from "./utils"
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -34,7 +35,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
 		adapter: ({ getFieldName, options, schema }) => {
-			console.log("CREATIGN ADAPTER", options, schema)
+			//console.log("CREATING ADAPTER", options, schema)
 			return {
 				async createSchema({ file, tables }) {
 					return {
@@ -45,10 +46,11 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async create({ model, data: values }) {
 					const modelRepo = getRepo(model)
-					const transformedValues = Object.fromEntries(Object.entries(values)
-						.map(([field, v]) => [getFieldName({ model, field }), v]))
+					// const transformedValues = Object.fromEntries(
+					// 	Object.entries(values).map(([field, v]) => [getFieldName({ model, field }), v])
+					// )
 
-					console.log("CREATE...", model, values, transformedValues)
+					// console.log("CREATE...", model, values, transformedValues)
 					return modelRepo.insert(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
@@ -62,6 +64,8 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
 					const modelRepo = getRepo(model)
+					const transformedWhere = where ? convertWhereClause(where) : undefined
+					const orderBy = sortBy ? { [sortBy.field]: sortBy.direction } : undefined
 
 					// // NOTE: remult repo.find() only accepts limit + page but not arbitrary offset
 					// // so we have to do something manual here
@@ -80,8 +84,8 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 
 					if (!offset) {
 						return modelRepo.find({
-							where: where ? convertWhereClause(where) : undefined,
-							orderBy: sortBy ? { [sortBy.field]: sortBy.direction } : undefined,
+							where: transformedWhere,
+							orderBy,
 							limit,
 						}) as Promise<T[]>
 					}
@@ -91,28 +95,32 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					// However, there are cases where that's not true. Here we handle that.
 					// Method: use "offset" as a way to skip the first page, then slice the 2nd page to
 					// return the requested "limit"
-					console.log("FIND MANY", limit, offset)
-					if (offset % limit === 0) {
-						console.log("FIND MANY limit and offset are compatible", limit, offset)
-					} else {
-						throw new Error(`FIND MANY limit and offset incompatible: ${limit} -- ${offset}`)
+
+					if (limit % offset !== 0) {
+						throw new RemultBetterAuthError(
+							`FIND MANY limit and offset INCOMPATIBLE: limit: ${limit} -- offset: ${offset}`
+						)
 					}
+
+					console.log("FIND MANY limit.......", limit, "offset", offset)
 					const pageSize = offset
-					const rows = await modelRepo.find({
-						where: where ? convertWhereClause(where) : undefined,
-						orderBy: sortBy ? { [sortBy.field]: sortBy.direction } : undefined,
-						limit: pageSize,
-						page: 1 //0-based so this is the second page
-					})
-					return rows.slice(0, limit) as T[]
+					const rows = (await modelRepo.find({
+						where: transformedWhere,
+						orderBy,
+						limit: pageSize, //"limit" in repo.find() is essentially pageSize
+						page: 1, // skipping 1 page lets us skip the intended offset
+					})) as T[]
+					if (offset === 2) {
+						console.log("rowsssssssssss", rows)
+					}
+					return rows.slice(0, limit)
+
 				},
 				async count({ model, where }) {
 					const modelRepo = getRepo(model)
 					return modelRepo.count(convertWhereClause(where))
 				},
 				async update({ model, where, update: values }) {
-					const modelRepo = getRepo(model)
-
 					//
 					// Sanity check. Shouldn't happen
 					//
@@ -122,6 +130,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						)
 					}
 
+					const modelRepo = getRepo(model)
 					return modelRepo.update(where[0].value as string | number, values as Record<string, unknown>) as Promise<
 						typeof values
 					>
@@ -134,8 +143,28 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					})
 				},
 				async delete({ model, where }) {
-					console.log("DELETE SINGLE", model, where)
-					await this.deleteMany({ model, where })
+					//
+					// Sanity check. Shouldn't happen
+					//
+					if (where.length > 1 || where[0].field !== "id") {
+						throw new Error(
+							`adapter::update() only supports 1 where clause with id field. Given where clause: ${JSON.stringify(where)}`
+						)
+					}
+
+					const modelRepo = getRepo(model)
+					try {
+						await modelRepo.delete(where[0].value as string | number)
+					} catch (e: unknown) {
+						// NOTE: remult should have an explicit error class or error code to make user error handling cleaner
+						const { message, httpStatusCode } = (e as ErrorInfo)
+						if (httpStatusCode === 404 || message?.includes("not found")) {
+							// absorb this error because better-auth expects deleting non-existing id to not throw
+						} else {
+							throw e
+						}
+					}
+
 				},
 				async deleteMany({ model, where }) {
 					const modelRepo = getRepo(model)

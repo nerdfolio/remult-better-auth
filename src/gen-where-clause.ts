@@ -1,12 +1,5 @@
-import { BetterAuthError } from "better-auth"
 import type { CleanedWhere } from "better-auth/adapters"
-
-class RemultBetterAuthError extends BetterAuthError {
-	constructor(message: string, cause?: string) {
-		super(message, cause)
-		this.name = "RemultBetterAuthError"
-	}
-}
+import { RemultBetterAuthError } from "./utils"
 
 export function convertWhereClause(where: CleanedWhere[] = []) {
 	// BetterAuth type CleanedWhere = {
@@ -16,7 +9,7 @@ export function convertWhereClause(where: CleanedWhere[] = []) {
 	// 	connector: "AND" | "OR"
 	// }
 
-	console.log("CONVERTING WHERE CLAUSE", where)
+	//console.log("CONVERTING WHERE CLAUSE", where)
 
 	const entries = where.map((w) => {
 		// if (w.connector === "AND") {
@@ -24,7 +17,7 @@ export function convertWhereClause(where: CleanedWhere[] = []) {
 		// 	return ["$and", { [opKey]: opValue }]
 		// }
 		if (w.connector === "AND") {
-			console.log("AND", w)
+			// console.log("AND", w)
 			return convertWhereOp(w)
 		}
 
