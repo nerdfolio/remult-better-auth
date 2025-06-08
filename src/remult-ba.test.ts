@@ -9,26 +9,32 @@ import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
 function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite") {
-	let remult: Remult
-	const cleanup = async function resetDb() {
+	async function resetDb() {
 		for (const entityClass of Object.values(entities)) {
 			await remult.repo(entityClass).deleteMany({ where: { id: { $ne: null } } })
 		}
 	}
 
-	const tempDir = "./zztemp"
-	switch (dbType) {
-		case "json":
-			remult = new Remult(new JsonFileDataProvider(tempDir))
-			break
-		default:
-			remult = new Remult(new SqlDatabase(
-				new TursoDataProvider(
-					createClient({
-						url: `file:${path.join(tempDir, "test-db.sqlite")}`
-					})
-				)))
+	function initRemult(dbType: "json" | "sqlite"): { remult: Remult, cleanup?: () => Promise<void> } {
+		const tempDir = "./zztemp"
+		switch (dbType) {
+			case "json":
+				return {
+					remult: new Remult(new JsonFileDataProvider(tempDir))
+				}
+			default:
+				return {
+					remult: new Remult(new SqlDatabase(
+						new TursoDataProvider(
+							createClient({
+								url: `file:${path.join(tempDir, "test-db.sqlite")}`
+							})
+						)))
+				}
+		}
 	}
+
+	const { remult, cleanup = resetDb } = initRemult(dbType)
 
 	return {
 		remult,
