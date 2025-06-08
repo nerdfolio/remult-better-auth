@@ -1,6 +1,5 @@
-import { BetterAuthError } from "better-auth"
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, Entity, type Remult, SqlDatabase } from "remult"
+import { type ClassType, type Remult, SqlDatabase } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
 
@@ -14,23 +13,18 @@ export interface RemultAdapterOptions {
 }
 
 export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) {
-	function getEntityClass(modelName: string) {
-		// NOTE: should request the entityInfo_key Symbol be exported by remult
-		const keySymbol = Symbol.for("entityInfo_key")
-		const entityClass = Object.values(adapterCfg.authEntities).find((ent) => ent[keySymbol] === modelName)
-
-
-		if (!entityClass) {
-			throw new BetterAuthError(
-				`The model "${modelName}" was not found in the authEntities object. Please pass the authEntities directly to the adapter options.`
-			)
-		}
-
-		return entityClass
-	}
+	const authRepos = Object.fromEntries(
+		Object.values(adapterCfg.authEntities)
+			.map((entityClass) => remult.repo(entityClass))
+			.map((repo) => [repo.metadata.key, repo])
+	)
 
 	function getRepo(modelName: string) {
-		return remult.repo(getEntityClass(modelName))
+		const repo = authRepos[modelName]
+		if (!repo) {
+			; `The auth model "${modelName}" not found. Is it in the authEntities passed to the remult-better-auth adapter?`
+		}
+		return repo
 	}
 
 	return createAdapter({
@@ -50,7 +44,10 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async create({ model, data: values }) {
 					const modelRepo = getRepo(model)
-					return modelRepo.create(values) as Promise<typeof values>
+					if ("email" in values) {
+						console.log("EEEEEEEE", values)
+					}
+					return modelRepo.insert(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
 					console.log("FIND ONE___", "model", model, "where", where)
