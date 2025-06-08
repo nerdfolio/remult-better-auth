@@ -56,8 +56,8 @@ function convertWhereOp({
 		case "startsWith":
 		case "endsWith":
 			// $ne, $lt, $lte, $gt, $gte, $in, $contains, $startsWith, $endsWith
-			return [field, { [`$${operator}`]: value }]
+			return [field, { [`$${op}`]: value }]
 		default:
-			throw new RemultBetterAuthError(`Unknown operator in where clause: ${JSON.stringify({ operator, value, field })}`)
+			throw new RemultBetterAuthError(`Unknown operator in better-auth where clause: ${JSON.stringify({ operator, value, field })}`)
 	}
 }
