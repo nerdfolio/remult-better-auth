@@ -4,7 +4,7 @@ import { runAdapterTest } from "better-auth/adapters/test"
 import { type ClassType, Remult, SqlDatabase } from "remult"
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
-import { afterAll, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
@@ -15,22 +15,20 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 		}
 	}
 
-	function initRemult(dbType: "json" | "sqlite"): { remult: Remult, cleanup?: () => Promise<void> } {
+	function initRemult(dbType: "json" | "sqlite"): { remult: Remult; cleanup?: () => Promise<void> } {
 		const tempDir = "./zztemp"
 		switch (dbType) {
 			case "json":
-				return {
-					remult: new Remult(new JsonFileDataProvider(tempDir))
-				}
-			default:
-				return {
-					remult: new Remult(new SqlDatabase(
-						new TursoDataProvider(
-							createClient({
-								url: `file:${path.join(tempDir, "test-db.sqlite")}`
-							})
-						)))
-				}
+				return { remult: new Remult(new JsonFileDataProvider(tempDir)) }
+			default: {
+				const db = new SqlDatabase(new TursoDataProvider(
+					createClient({
+						url: `file:${path.join(tempDir, "test-db.sqlite")}`
+					})
+				))
+
+				return { remult: new Remult(db) }
+			}
 		}
 	}
 
@@ -44,11 +42,18 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 }
 
 describe("remult-better-auth adapter tests from better-auth", async () => {
-	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "json")
+	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "sqlite")
+
+	beforeAll(async () => {
+		const metadata = Object.values(testEntities).map((entityClass) => remult.repo(entityClass).metadata)
+		if (remult.dataProvider.ensureSchema) {
+			await remult.dataProvider.ensureSchema(metadata)
+		}
+	})
 
 	afterAll(async () => {
 		// Run DB cleanup here...
-		await cleanup()
+		//await cleanup()
 	})
 
 	const adapterFn = remultAdapter(remult, {
