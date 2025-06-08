@@ -2,8 +2,8 @@ import { runAdapterTest } from "better-auth/adapters/test"
 import { type ClassType, Remult } from "remult"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, describe } from "vitest"
-import * as authEntities from "../db/auth-schema"
 import { remultAdapter } from "./remult-ba"
+import * as authEntities from "./schema.example"
 
 function initRemultForTest(entities: Record<string, ClassType<unknown>>) {
 	const remult = new Remult(new JsonFileDataProvider("./zztemp"))
@@ -37,7 +37,6 @@ describe("remult-better-auth adapter tests", async () => {
 	await runAdapterTest({
 		getAdapter: async (betterAuthOptions = {}) => {
 			return adapter(betterAuthOptions)
-		},
-		testPrefix: "create",
+		}
 	})
 })
