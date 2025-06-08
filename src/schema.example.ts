@@ -11,7 +11,9 @@ export class User {
 	// However, this test schema does not use it because better-auth's adapter test suites uses a bad email value:
 	// "email_address". We'll submit a PR to them but in the mean time, skip email validation to let the test suite run.
 	//
-	@Fields.string({ required: true, validate: [Validators.unique()] })
+	// NOTE: better-auth adapter test suite also uses an empty email even though required is true.
+	// This example schema disables required
+	@Fields.string({ required: true, validate: [Validators.unique(), Validators.email()] })
 	email = ""
 
 	@Fields.boolean({ required: true })

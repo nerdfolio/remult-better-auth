@@ -33,7 +33,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			adapterName: "Remult Adapter",
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
-		adapter: ({ debugLog }) => {
+		adapter: ({ debugLog, getDefaultModelName, getModelName, getFieldName, getDefaultFieldName }) => {
 			return {
 				async createSchema({ file, tables }) {
 					return {
@@ -46,13 +46,17 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					const modelRepo = getRepo(model)
 					if ("email" in values) {
 						console.log("EEEEEEEE", values)
+						console.log("EEEE model", model, "default:", getDefaultModelName(model), "mapped:", getModelName(model))
+						console.log("EEEE field:", "email",
+							"default:", getDefaultFieldName({ model, field: "email" }),
+							"mapped:", getFieldName({ model, field: "email" }))
 					}
 					return modelRepo.insert(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
-					console.log("FIND ONE___", "model", model, "where", where)
-					console.log("FIND ONE___", "converted where:", convertWhereClause(where))
-					debugLog("findOne:::::::::::::", { model, where })
+					//console.log("FIND ONE___", "model", model, "where", where)
+					//console.log("FIND ONE___", "converted where:", convertWhereClause(where))
+					//debugLog("findOne:::::::::::::", { model, where })
 					const modelRepo = getRepo(model)
 					return modelRepo.findOne({
 						where: convertWhereClause(where),
@@ -89,14 +93,15 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async update({ model, where, update: values }) {
 					const modelRepo = getRepo(model)
-					console.log("SINGLE UPDATEEEE", model, where, values)
-					if (1 === 1) throw new Error("BOOO")
-					return modelRepo.update("zzzz", values as Record<string, unknown>) as Promise<typeof values>
+					if (where.length > 1)
+						throw new Error(`adapter::update() only supports single update. Given where clause: ${JSON.stringify(where)}`)
 
-					// return modelRepo.updateMany({
-					// 	where: convertWhereClause(where),
-					// 	set: values as Record<string, unknown>,
-					// })
+					const { field, value: idValue } = where[0]
+					if (field !== "id") {
+						throw new Error(`adapter::update() only supports 1 where clause with id field. Given where clause: ${JSON.stringify(where)}`)
+					}
+
+					return modelRepo.update(idValue as string | number, values as Record<string, unknown>) as Promise<typeof values>
 				},
 				async updateMany({ model, where, update: values }) {
 					const modelRepo = getRepo(model)
