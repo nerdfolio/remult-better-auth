@@ -1,5 +1,5 @@
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type Remult, SqlDatabase } from "remult"
+import type { ClassType, Remult } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
 
@@ -33,7 +33,8 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			adapterName: "Remult Adapter",
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
-		adapter: ({ debugLog, getDefaultModelName, getModelName, getFieldName, getDefaultFieldName }) => {
+		adapter: ({ getFieldName, options, schema }) => {
+			console.log("CREATIGN ADAPTER", options, schema)
 			return {
 				async createSchema({ file, tables }) {
 					return {
@@ -44,13 +45,10 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async create({ model, data: values }) {
 					const modelRepo = getRepo(model)
-					if ("email" in values) {
-						console.log("EEEEEEEE", values)
-						console.log("EEEE model", model, "default:", getDefaultModelName(model), "mapped:", getModelName(model))
-						console.log("EEEE field:", "email",
-							"default:", getDefaultFieldName({ model, field: "email" }),
-							"mapped:", getFieldName({ model, field: "email" }))
-					}
+					const transformedValues = Object.fromEntries(Object.entries(values)
+						.map(([field, v]) => [getFieldName({ model, field }), v]))
+
+					console.log("CREATE...", model, values, transformedValues)
 					return modelRepo.insert(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
@@ -65,27 +63,48 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
 					const modelRepo = getRepo(model)
 
-					// NOTE: remult repo.find() only accepts limit + page but not arbitrary offset
-					// so we have to do something manual here
-					const command = SqlDatabase.getDb().createCommand()
+					// // NOTE: remult repo.find() only accepts limit + page but not arbitrary offset
+					// // so we have to do something manual here
+					// const command = SqlDatabase.getDb().createCommand()
 
-					const filterSql = await SqlDatabase.filterToRaw(modelRepo, convertWhereClause(where), command)
+					// const filterSql = await SqlDatabase.filterToRaw(modelRepo, convertWhereClause(where), command)
 
-					const orderBy = sortBy ? `ORDER BY ${sortBy.field} ${sortBy.direction}` : ""
-					const limitOffset = `${limit ? `LIMIT ${limit} ` : ""} ${offset ? `OFFSET ${offset}` : ""}`.trim()
+					// const orderBy = sortBy ? `ORDER BY ${sortBy.field} ${sortBy.direction}` : ""
+					// const limitOffset = `${limit ? `LIMIT ${limit} ` : ""} ${offset ? `OFFSET ${offset}` : ""}`.trim()
 
-					const dbTable = modelRepo.metadata.dbName
-					const result = await command.execute(
-						`SELECT * FROM ${dbTable} WHERE ${filterSql} ${orderBy} ${limitOffset}`.trim()
-					)
-					return result.rows satisfies T[]
+					// const dbTable = modelRepo.metadata.dbName
+					// const result = await command.execute(
+					// 	`SELECT * FROM ${dbTable} WHERE ${filterSql} ${orderBy} ${limitOffset}`.trim()
+					// )
+					// return result.rows satisfies T[]
 
-					// if no offset given, just use the standard implementation
-					// return modelRepo.find({
-					// 	where: where ? convertWhereClause(where) : undefined,
-					// 	orderBy: sortBy ? { [sortBy.field]: sortBy.direction } : undefined,
-					// 	limit,
-					// })
+					if (!offset) {
+						return modelRepo.find({
+							where: where ? convertWhereClause(where) : undefined,
+							orderBy: sortBy ? { [sortBy.field]: sortBy.direction } : undefined,
+							limit,
+						}) as Promise<T[]>
+					}
+
+					// remult.repo.find() only accepts limit+page but not arbitrary offset.
+					// Most of the time, offset is obtained via some pagination mechanism and thus offset = limit * page
+					// However, there are cases where that's not true. Here we handle that.
+					// Method: use "offset" as a way to skip the first page, then slice the 2nd page to
+					// return the requested "limit"
+					console.log("FIND MANY", limit, offset)
+					if (offset % limit === 0) {
+						console.log("FIND MANY limit and offset are compatible", limit, offset)
+					} else {
+						throw new Error(`FIND MANY limit and offset incompatible: ${limit} -- ${offset}`)
+					}
+					const pageSize = offset
+					const rows = await modelRepo.find({
+						where: where ? convertWhereClause(where) : undefined,
+						orderBy: sortBy ? { [sortBy.field]: sortBy.direction } : undefined,
+						limit: pageSize,
+						page: 1 //0-based so this is the second page
+					})
+					return rows.slice(0, limit) as T[]
 				},
 				async count({ model, where }) {
 					const modelRepo = getRepo(model)
@@ -93,15 +112,19 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async update({ model, where, update: values }) {
 					const modelRepo = getRepo(model)
-					if (where.length > 1)
-						throw new Error(`adapter::update() only supports single update. Given where clause: ${JSON.stringify(where)}`)
 
-					const { field, value: idValue } = where[0]
-					if (field !== "id") {
-						throw new Error(`adapter::update() only supports 1 where clause with id field. Given where clause: ${JSON.stringify(where)}`)
+					//
+					// Sanity check. Shouldn't happen
+					//
+					if (where.length > 1 || where[0].field !== "id") {
+						throw new Error(
+							`adapter::update() only supports 1 where clause with id field. Given where clause: ${JSON.stringify(where)}`
+						)
 					}
 
-					return modelRepo.update(idValue as string | number, values as Record<string, unknown>) as Promise<typeof values>
+					return modelRepo.update(where[0].value as string | number, values as Record<string, unknown>) as Promise<
+						typeof values
+					>
 				},
 				async updateMany({ model, where, update: values }) {
 					const modelRepo = getRepo(model)

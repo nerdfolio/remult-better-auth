@@ -13,7 +13,7 @@ export class User {
 	//
 	// NOTE: better-auth adapter test suite also uses an empty email even though required is true.
 	// This example schema disables required
-	@Fields.string({ required: true, validate: [Validators.unique(), Validators.email()] })
+	@Fields.string({ required: false, validate: [Validators.unique()] })
 	email = ""
 
 	@Fields.boolean({ required: true })

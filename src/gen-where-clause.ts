@@ -1,6 +1,13 @@
 import { BetterAuthError } from "better-auth"
 import type { CleanedWhere } from "better-auth/adapters"
 
+class RemultBetterAuthError extends BetterAuthError {
+	constructor(message: string, cause?: string) {
+		super(message, cause)
+		this.name = "RemultBetterAuthError"
+	}
+}
+
 export function convertWhereClause(where: CleanedWhere[] = []) {
 	// BetterAuth type CleanedWhere = {
 	// 	operator: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "contains" | "starts_with" | "ends_with"
@@ -9,7 +16,7 @@ export function convertWhereClause(where: CleanedWhere[] = []) {
 	// 	connector: "AND" | "OR"
 	// }
 
-	console.log("where clause", where)
+	console.log("CONVERTING WHERE CLAUSE", where)
 
 	const entries = where.map((w) => {
 		// if (w.connector === "AND") {
@@ -53,9 +60,11 @@ function convertWhereOp({
 		case "gte":
 		case "in":
 		case "contains":
+		case "startsWith":
+		case "endsWith":
 			// $ne, $lt, $lte, $gt, $gte, $in, $contains, $startsWith, $endsWith
 			return [field, { [`$${operator}`]: value }]
 		default:
-			throw new BetterAuthError(`Unknown operator in where clause: ${JSON.stringify({ operator, value, field })}`)
+			throw new RemultBetterAuthError(`Unknown operator in where clause: ${JSON.stringify({ operator, value, field })}`)
 	}
 }

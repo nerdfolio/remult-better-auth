@@ -39,11 +39,10 @@ describe("remult-better-auth adapter tests", async () => {
 		getAdapter: async (betterAuthOptions = {}) => {
 			return adapter(betterAuthOptions)
 		},
-		disableTests: {
-			FIND_MODEL_WITH_MODIFIED_FIELD_NAME: true
-		}
+		// disableTests: {
+		// 	//FIND_MODEL_WITH_MODIFIED_FIELD_NAME: true,
+		// },
 	})
-
 })
 
 // async function testFindModelWithModifiedFieldName({
