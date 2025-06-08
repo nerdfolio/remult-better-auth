@@ -4,7 +4,7 @@ import { runAdapterTest } from "better-auth/adapters/test"
 import { type ClassType, Remult, SqlDatabase } from "remult"
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
-import { afterAll, describe } from "vitest"
+import { afterAll, describe, expect, test } from "vitest"
 import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
@@ -37,15 +37,15 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 	}
 }
 
-describe("remult-better-auth adapter tests", async () => {
+describe("remult-better-auth adapter tests from better-auth", async () => {
 	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "json")
 
 	afterAll(async () => {
 		// Run DB cleanup here...
-		// await cleanup()
+		await cleanup()
 	})
 
-	const adapter = remultAdapter(remult, {
+	const adapterFn = remultAdapter(remult, {
 		authEntities: testEntities,
 		debugLogs: {
 			// If your adapter config allows passing in debug logs, then pass this here.
@@ -55,7 +55,27 @@ describe("remult-better-auth adapter tests", async () => {
 
 	await runAdapterTest({
 		getAdapter: async (betterAuthOptions = {}) => {
-			return adapter(betterAuthOptions)
+			return adapterFn(betterAuthOptions)
 		},
+	})
+
+	test("findMany limit < offset", async () => {
+		const res = await adapterFn({}).findMany({ model: "user", offset: 5, limit: 2 })
+		expect(res).toHaveLength(2)
+	})
+
+	test("findMany limit > offset", async () => {
+		const res = await adapterFn({}).findMany({ model: "user", offset: 4, limit: 3 })
+		expect(res).toHaveLength(3)
+	})
+
+	test("findMany has limit, no offset", async () => {
+		const res = await adapterFn({}).findMany({ model: "user", limit: 3 })
+		expect(res).toHaveLength(3)
+	})
+
+	test("findMany no limit, has offset", async () => {
+		const res = await adapterFn({}).findMany({ model: "user", offset: 3 })
+		expect(res).toHaveLength(4)
 	})
 })

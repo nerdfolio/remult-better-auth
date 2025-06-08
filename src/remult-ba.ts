@@ -2,7 +2,6 @@ import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better
 import type { ClassType, ErrorInfo, Remult } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
-import { RemultBetterAuthError } from "./utils"
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -81,37 +80,30 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						}) as Promise<T[]>
 					}
 
-					// remult.repo.find() only accepts limit+page but not arbitrary offset.
-					// Most of the time, offset is obtained via some pagination mechanism and thus offset = limit * page
-					// However, there are cases where that's not true. Here we handle that.
-					// Method: use "offset" as a way to skip the first page, then slice the 2nd page to
-					// return the requested "limit"
+					if (limit > offset) {
+						// example: limit 10, offset 3
+						// Because repo.find() only give us limit+page, we have to do this lame fallback grab limit+offset
+						// and use slice to do the skipping
+						const rows = (await modelRepo.find({
+							where: transformedWhere,
+							orderBy,
+							limit: limit + offset,
+						})) as T[]
 
-					if (limit % offset !== 0) {
-						throw new RemultBetterAuthError(
-							`FIND MANY limit and offset INCOMPATIBLE: limit: ${limit} -- offset: ${offset}`
-						)
+						return rows.slice(offset)
 					}
 
-
-					console.log("FIND MANY..........limit:", limit, "offset", offset, "where", where, "transformedWhere", transformedWhere)
-
-					if(limit > offset) {
-						
-					}
-
-					const pageSize = offset
+					//
+					// offset >= limit or no limit specified
+					//
 					const rows = (await modelRepo.find({
 						where: transformedWhere,
 						orderBy,
-						limit: pageSize, //"limit" in repo.find() is essentially pageSize
-						page: 1, // skipping 1 page lets us skip the intended offset
+						limit: offset, // offset acts as pageSize
+						page: 1        // then we skip page 0 and slice to get limit
 					})) as T[]
-					if (offset === 2) {
-						console.log("rowsssssssssss", rows)
-					}
-					return rows.slice(0, limit)
 
+					return rows.slice(0, limit)
 				},
 				async count({ model, where }) {
 					const modelRepo = getRepo(model)
@@ -154,14 +146,13 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						await modelRepo.delete(where[0].value as string | number)
 					} catch (e: unknown) {
 						// NOTE: remult should have an explicit error class or error code to make user error handling cleaner
-						const { message, httpStatusCode } = (e as ErrorInfo)
+						const { message, httpStatusCode } = e as ErrorInfo
 						if (httpStatusCode === 404 || message?.includes("not found")) {
 							// absorb this error because better-auth expects deleting non-existing id to not throw
 						} else {
 							throw e
 						}
 					}
-
 				},
 				async deleteMany({ model, where }) {
 					const modelRepo = getRepo(model)
