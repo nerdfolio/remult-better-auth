@@ -1,29 +1,33 @@
 import { runAdapterTest } from "better-auth/adapters/test"
-import { Remult } from "remult"
+import { type ClassType, Remult } from "remult"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, describe } from "vitest"
-import * as authSchema from "../db/auth-schema"
+import * as authEntities from "../db/auth-schema"
 import { remultAdapter } from "./remult-ba"
 
+function initRemultForTest(entities: Record<string, ClassType<unknown>>) {
+	const remult = new Remult(new JsonFileDataProvider("./zztemp"))
+
+	return {
+		remult,
+		testEntities: entities,
+		cleanup: async () => {
+			for (const entityClass of Object.values(entities)) {
+				await remult.repo(entityClass).deleteMany({ where: { id: { $ne: null } } })
+			}
+		},
+	}
+}
+
 describe("remult-better-auth adapter tests", async () => {
-	// const _api = remultApi({
-	// 	//entities: [Task],
-	// 	//controllers: [TasksController],
-	// 	//dataProvider: devCreateD1DataProviderWithLocalBinding("DB"),
-	// })
-
-	// FIXME: why is there no JSON file in the ./db directory?
-	const remult = new Remult(new JsonFileDataProvider("./db"))
-	// serverRemult.dataProvider = new JsonDataProvider(new JsonEntityFileStorage("./db"))
-
-	const user = remult.repo(authSchema.User).create({ name: "foo", email: "barrr@example.com" })
-	console.log("------------user-------------", user)
+	const { remult, testEntities, cleanup } = initRemultForTest(authEntities)
 
 	afterAll(async () => {
 		// Run DB cleanup here...
+		await cleanup()
 	})
 	const adapter = remultAdapter(remult, {
-		authEntities: authSchema,
+		authEntities: testEntities,
 		debugLogs: {
 			// If your adapter config allows passing in debug logs, then pass this here.
 			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
