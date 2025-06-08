@@ -1,5 +1,5 @@
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import type { ClassType, ErrorInfo, Remult } from "remult"
+import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
 import { genSchemaCode } from "./gen-schema"
 import { convertWhereClause } from "./gen-where-clause"
 
@@ -57,21 +57,6 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					const transformedWhere = where ? convertWhereClause(where) : undefined
 					const orderBy = sortBy ? { [sortBy.field]: sortBy.direction } : undefined
 
-					// // NOTE: remult repo.find() only accepts limit + page but not arbitrary offset
-					// // so we have to do something manual here
-					// const command = SqlDatabase.getDb().createCommand()
-
-					// const filterSql = await SqlDatabase.filterToRaw(modelRepo, convertWhereClause(where), command)
-
-					// const orderBy = sortBy ? `ORDER BY ${sortBy.field} ${sortBy.direction}` : ""
-					// const limitOffset = `${limit ? `LIMIT ${limit} ` : ""} ${offset ? `OFFSET ${offset}` : ""}`.trim()
-
-					// const dbTable = modelRepo.metadata.dbName
-					// const result = await command.execute(
-					// 	`SELECT * FROM ${dbTable} WHERE ${filterSql} ${orderBy} ${limitOffset}`.trim()
-					// )
-					// return result.rows satisfies T[]
-
 					if (!offset) {
 						return modelRepo.find({
 							where: transformedWhere,
@@ -80,30 +65,51 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						}) as Promise<T[]>
 					}
 
-					if (limit > offset) {
-						// example: limit 10, offset 3
-						// Because repo.find() only give us limit+page, we have to do this lame fallback grab limit+offset
-						// and use slice to do the skipping
+					if (!(modelRepo.metadata.options.dataProvider instanceof SqlDatabase)) {
+						//
+						// For non-sql providers, such as Json file, we have to fallback to grabbing a bigger chunk
+						// than required, then slice it to the requested limit
+						//
+						if (limit > offset) {
+							// example: limit 10, offset 3
+							// Because repo.find() only give us limit+page, we have to do this lame fallback grab limit+offset
+							// and use slice to do the skipping
+							const rows = (await modelRepo.find({
+								where: transformedWhere,
+								orderBy,
+								limit: limit + offset,
+							})) as T[]
+
+							return rows.slice(offset)
+						}
+
+						//
+						// limit <= offset or no limit specified
+						//
 						const rows = (await modelRepo.find({
 							where: transformedWhere,
 							orderBy,
-							limit: limit + offset,
+							limit: offset, // offset acts as pageSize
+							page: 1        // then we skip page 0 and slice to get limit
 						})) as T[]
 
-						return rows.slice(offset)
+						return rows.slice(0, limit)
 					}
 
 					//
-					// offset >= limit or no limit specified
+					// For SQL data providers, we can go drop to sql to use limit/offset
 					//
-					const rows = (await modelRepo.find({
-						where: transformedWhere,
-						orderBy,
-						limit: offset, // offset acts as pageSize
-						page: 1        // then we skip page 0 and slice to get limit
-					})) as T[]
+					const command = SqlDatabase.getDb().createCommand()
+					const sqlFilter = await SqlDatabase.filterToRaw(modelRepo, convertWhereClause(where), command)
 
-					return rows.slice(0, limit)
+					const sqlOrderBy = sortBy ? `ORDER BY ${sortBy.field} ${sortBy.direction}` : ""
+					const sqlLimitOffset = `${limit ? `LIMIT ${limit} ` : ""} ${offset ? `OFFSET ${offset}` : ""}`.trim()
+
+					const dbTable = modelRepo.metadata.dbName
+					const result = await command.execute(
+						`SELECT * FROM ${dbTable} WHERE ${sqlFilter} ${sqlOrderBy} ${sqlLimitOffset}`.trim()
+					)
+					return result.rows satisfies T[]
 				},
 				async count({ model, where }) {
 					const modelRepo = getRepo(model)
