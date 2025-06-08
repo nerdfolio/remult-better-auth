@@ -1,30 +1,48 @@
+import path from "node:path"
+import { createClient } from "@libsql/client"
 import { runAdapterTest } from "better-auth/adapters/test"
-import { type ClassType, Remult } from "remult"
+import { type ClassType, Remult, SqlDatabase } from "remult"
+import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, describe } from "vitest"
 import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
-function initRemultForTest(entities: Record<string, ClassType<unknown>>) {
-	const remult = new Remult(new JsonFileDataProvider("./zztemp"))
+function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite") {
+	let remult: Remult
+	const cleanup = async function resetDb() {
+		for (const entityClass of Object.values(entities)) {
+			await remult.repo(entityClass).deleteMany({ where: { id: { $ne: null } } })
+		}
+	}
+
+	const tempDir = "./zztemp"
+	switch (dbType) {
+		case "json":
+			remult = new Remult(new JsonFileDataProvider(tempDir))
+			break
+		default:
+			remult = new Remult(new SqlDatabase(
+				new TursoDataProvider(
+					createClient({
+						url: `file:${path.join(tempDir, "test-db.sqlite")}`
+					})
+				)))
+	}
 
 	return {
 		remult,
+		cleanup,
 		testEntities: entities,
-		cleanup: async () => {
-			for (const entityClass of Object.values(entities)) {
-				await remult.repo(entityClass).deleteMany({ where: { id: { $ne: null } } })
-			}
-		},
 	}
 }
 
 describe("remult-better-auth adapter tests", async () => {
-	const { remult, testEntities, cleanup } = initRemultForTest(authEntities)
+	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "json")
 
 	afterAll(async () => {
 		// Run DB cleanup here...
-		//await cleanup()
+		// await cleanup()
 	})
 
 	const adapter = remultAdapter(remult, {
@@ -39,51 +57,5 @@ describe("remult-better-auth adapter tests", async () => {
 		getAdapter: async (betterAuthOptions = {}) => {
 			return adapter(betterAuthOptions)
 		},
-		// disableTests: {
-		// 	//FIND_MODEL_WITH_MODIFIED_FIELD_NAME: true,
-		// },
 	})
 })
-
-// async function testFindModelWithModifiedFieldName({
-// 	getAdapter: Parameters<typeof runAdapterTest>["getAdapter"],
-// }) {
-// 	const email = "test-email-with-modified-field@email.com";
-// 	const adapter = getAdapter
-
-// 			const adapter = await getAdapter(
-// 				Object.assign(
-// 					{
-// 						user: {
-// 							fields: {
-// 								email: "email_address",
-// 							},
-// 						},
-// 					},
-// 					internalOptions?.predefinedOptions,
-// 				),
-// 			);
-// 			const user = await adapter.create({
-// 				model: "user",
-// 				data: {
-// 					email,
-// 					name: "test-name-with-modified-field",
-// 					emailVerified: true,
-// 					createdAt: new Date(),
-// 					updatedAt: new Date(),
-// 				},
-// 			});
-// 			expect(user.email).toEqual(email);
-// 			const res = await adapter.findOne<User>({
-// 				model: "user",
-// 				where: [
-// 					{
-// 						field: "email",
-// 						value: email,
-// 					},
-// 				],
-// 			});
-// 			expect(res).not.toBeNull();
-// 			expect(res?.email).toEqual(email);
-// 		},
-// }

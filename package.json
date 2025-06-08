@@ -11,7 +11,7 @@
    "type": "module",
    "scripts": {
       "test": "vitest run",
-			"why-no-json": "tsx src/why-no-json",
+      "why-no-json": "tsx src/why-no-json",
       "generate": "tsx ./src/cli.ts generate"
    },
    "packageManager": "pnpm@10.10.0",
@@ -21,6 +21,7 @@
    },
    "devDependencies": {
       "@biomejs/biome": "^1.9.4",
+      "@libsql/client": "^0.15.8",
       "@types/node": "^22.15.30",
       "better-auth": "^1.2.8",
       "remult": "^3.0.4",

@@ -35,7 +35,6 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
 		adapter: ({ getFieldName, options, schema }) => {
-			//console.log("CREATING ADAPTER", options, schema)
 			return {
 				async createSchema({ file, tables }) {
 					return {
@@ -46,17 +45,9 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async create({ model, data: values }) {
 					const modelRepo = getRepo(model)
-					// const transformedValues = Object.fromEntries(
-					// 	Object.entries(values).map(([field, v]) => [getFieldName({ model, field }), v])
-					// )
-
-					// console.log("CREATE...", model, values, transformedValues)
 					return modelRepo.insert(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
-					//console.log("FIND ONE___", "model", model, "where", where)
-					//console.log("FIND ONE___", "converted where:", convertWhereClause(where))
-					//debugLog("findOne:::::::::::::", { model, where })
 					const modelRepo = getRepo(model)
 					return modelRepo.findOne({
 						where: convertWhereClause(where),
@@ -102,7 +93,13 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						)
 					}
 
-					console.log("FIND MANY limit.......", limit, "offset", offset)
+
+					console.log("FIND MANY..........limit:", limit, "offset", offset, "where", where, "transformedWhere", transformedWhere)
+
+					if(limit > offset) {
+						
+					}
+
 					const pageSize = offset
 					const rows = (await modelRepo.find({
 						where: transformedWhere,
