@@ -1,5 +1,6 @@
 import path from "node:path"
 import { createClient } from "@libsql/client"
+import type { BetterAuthOptions } from "better-auth"
 import { runAdapterTest } from "better-auth/adapters/test"
 import { type ClassType, Remult, SqlDatabase } from "remult"
 import { TursoDataProvider } from "remult/remult-turso"
@@ -9,7 +10,7 @@ import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
 function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite") {
-	async function resetDb() {
+	async function clearTables() {
 		for (const entityClass of Object.values(entities)) {
 			await remult.repo(entityClass).deleteMany({ where: { id: { $ne: null } } })
 		}
@@ -21,18 +22,20 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 			case "json":
 				return { remult: new Remult(new JsonFileDataProvider(tempDir)) }
 			default: {
-				const db = new SqlDatabase(new TursoDataProvider(
-					createClient({
-						url: `file:${path.join(tempDir, "test-db.sqlite")}`
-					})
-				))
+				const db = new SqlDatabase(
+					new TursoDataProvider(
+						createClient({
+							url: `file:${path.join(tempDir, "test-db.sqlite")}`,
+						})
+					)
+				)
 
 				return { remult: new Remult(db) }
 			}
 		}
 	}
 
-	const { remult, cleanup = resetDb } = initRemult(dbType)
+	const { remult, cleanup = clearTables } = initRemult(dbType)
 
 	return {
 		remult,
@@ -41,8 +44,16 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 	}
 }
 
-describe("remult-better-auth adapter tests from better-auth", async () => {
+describe("remult-better-auth adapter tests", async () => {
 	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "sqlite")
+
+	const testOptions: BetterAuthOptions = {
+		user: {
+			fields: {
+				email: "email_address",
+			},
+		},
+	}
 
 	beforeAll(async () => {
 		const metadata = Object.values(testEntities).map((entityClass) => remult.repo(entityClass).metadata)
@@ -53,7 +64,7 @@ describe("remult-better-auth adapter tests from better-auth", async () => {
 
 	afterAll(async () => {
 		// Run DB cleanup here...
-		//await cleanup()
+		await cleanup()
 	})
 
 	const adapterFn = remultAdapter(remult, {
@@ -65,8 +76,8 @@ describe("remult-better-auth adapter tests from better-auth", async () => {
 	})
 
 	await runAdapterTest({
-		getAdapter: async (betterAuthOptions = {}) => {
-			return adapterFn(betterAuthOptions)
+		getAdapter: async (customOptions = {}) => {
+			return adapterFn({ ...testOptions, ...customOptions })
 		},
 	})
 

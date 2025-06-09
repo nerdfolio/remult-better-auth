@@ -33,7 +33,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			adapterName: "Remult Adapter",
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
-		adapter: ({ getFieldName, options, schema }) => {
+		adapter: () => {
 			return {
 				async createSchema({ file, tables }) {
 					return {
