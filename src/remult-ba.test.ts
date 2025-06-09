@@ -2,20 +2,20 @@ import path from "node:path"
 import { createClient } from "@libsql/client"
 import type { BetterAuthOptions } from "better-auth"
 import { runAdapterTest } from "better-auth/adapters/test"
-import { type ClassType, Remult, SqlDatabase } from "remult"
+import { type ClassType, InMemoryDataProvider, Remult, SqlDatabase } from "remult"
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
-function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite") {
-	function initRemult(dbType: "json" | "sqlite"): { remult: Remult; cleanup?: () => Promise<void> } {
+function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite" | "memory") {
+	function initRemult(dbType: "json" | "sqlite" | "memory"): { remult: Remult; cleanup?: () => Promise<void> } {
 		const tempDir = "./zztemp"
 		switch (dbType) {
 			case "json":
 				return { remult: new Remult(new JsonFileDataProvider(tempDir)) }
-			default: {
+			case "sqlite": {
 				const db = new SqlDatabase(
 					new TursoDataProvider(
 						createClient({
@@ -26,6 +26,8 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 
 				return { remult: new Remult(db) }
 			}
+			default:
+				return { remult: new Remult(new InMemoryDataProvider()) }
 		}
 	}
 
@@ -45,7 +47,7 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 }
 
 describe("remult-better-auth adapter tests", async () => {
-	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "sqlite")
+	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "memory")
 
 	const testOptions: BetterAuthOptions = {
 		user: {
