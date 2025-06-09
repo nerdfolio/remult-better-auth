@@ -6,3 +6,16 @@ export class RemultBetterAuthError extends BetterAuthError {
 		this.name = "RemultBetterAuthError"
 	}
 }
+
+export function trimLines(str: string, indentYN = false) {
+	const indent = indentYN ? "  " : ""
+	return str
+		.trim()
+		.split("\n")
+		.map((line) => (line.trim() ? indent + line.trim() : line.trim()))
+		.join("\n")
+}
+
+export function modelNameToClassName(modelName: string) {
+	return modelName.charAt(0).toUpperCase() + modelName.slice(1)
+}

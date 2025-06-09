@@ -1,7 +1,7 @@
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
-import { genSchemaCode } from "./gen-schema"
-import { convertWhereClause } from "./gen-where-clause"
+import { generateSchemaCode } from "./transform-model"
+import { transformWhereClause } from "./transform-where"
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -37,7 +37,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			return {
 				async createSchema({ file, tables }) {
 					return {
-						code: genSchemaCode(tables),
+						code: generateSchemaCode(tables),
 						path: file ?? "./auth-schema.ts",
 						overwrite: true,
 					}
@@ -49,12 +49,12 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
 					const modelRepo = getRepo(model)
 					return modelRepo.findOne({
-						where: convertWhereClause(where),
+						where: transformWhereClause(where),
 					}) as Promise<T>
 				},
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
 					const modelRepo = getRepo(model)
-					const transformedWhere = where ? convertWhereClause(where) : undefined
+					const transformedWhere = where ? transformWhereClause(where) : undefined
 					const orderBy = sortBy ? { [sortBy.field]: sortBy.direction } : undefined
 
 					if (!offset) {
@@ -100,7 +100,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					// For SQL data providers, we can go drop to sql to use limit/offset
 					//
 					const command = SqlDatabase.getDb().createCommand()
-					const sqlFilter = await SqlDatabase.filterToRaw(modelRepo, convertWhereClause(where), command)
+					const sqlFilter = await SqlDatabase.filterToRaw(modelRepo, transformWhereClause(where), command)
 
 					const sqlOrderBy = sortBy ? `ORDER BY ${sortBy.field} ${sortBy.direction}` : ""
 					const sqlLimitOffset = `${limit ? `LIMIT ${limit} ` : ""} ${offset ? `OFFSET ${offset}` : ""}`.trim()
@@ -113,7 +113,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async count({ model, where }) {
 					const modelRepo = getRepo(model)
-					return modelRepo.count(convertWhereClause(where))
+					return modelRepo.count(transformWhereClause(where))
 				},
 				async update({ model, where, update: values }) {
 					//
@@ -133,7 +133,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				async updateMany({ model, where, update: values }) {
 					const modelRepo = getRepo(model)
 					return modelRepo.updateMany({
-						where: convertWhereClause(where),
+						where: transformWhereClause(where),
 						set: values as Record<string, unknown>,
 					})
 				},
@@ -162,7 +162,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async deleteMany({ model, where }) {
 					const modelRepo = getRepo(model)
-					return modelRepo.deleteMany({ where: convertWhereClause(where) })
+					return modelRepo.deleteMany({ where: transformWhereClause(where) })
 				},
 				options: adapterCfg,
 			}

@@ -1,42 +1,32 @@
 import type { CleanedWhere } from "better-auth/adapters"
 import { RemultBetterAuthError } from "./utils"
 
-export function convertWhereClause(where: CleanedWhere[] = []) {
-	// BetterAuth type CleanedWhere = {
-	// 	operator: "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "in" | "contains" | "starts_with" | "ends_with"
-	// 	value: string | number | boolean | string[] | number[] | Date | null
-	// 	field: string
-	// 	connector: "AND" | "OR"
-	// }
-
-	//console.log("CONVERTING WHERE CLAUSE", where)
-
+export function transformWhereClause(where: CleanedWhere[] = []) {
 	const entries = where.map((w) => {
 		// if (w.connector === "AND") {
 		// 	const [opKey, opValue] = convertWhereOp(w)
 		// 	return ["$and", { [opKey]: opValue }]
 		// }
 		if (w.connector === "AND") {
-			// console.log("AND", w)
-			return convertWhereOp(w)
+			return transformWhereOp(w)
 		}
 
 		if (w.connector === "OR") {
 			console.log("OR", w)
-			const [opKey, opValue] = convertWhereOp(w)
+			const [opKey, opValue] = transformWhereOp(w)
 			return ["$or", { [opKey]: opValue }]
 		}
 
 		if (w.operator) {
 			console.log("Where with op only", w)
-			return convertWhereOp(w)
+			return transformWhereOp(w)
 		}
 	})
 
 	return Object.fromEntries(entries as [string, unknown][])
 }
 
-function convertWhereOp({
+function transformWhereOp({
 	operator,
 	value,
 	field,
