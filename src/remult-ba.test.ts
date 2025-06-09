@@ -10,12 +10,6 @@ import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
 function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite") {
-	async function clearTables() {
-		for (const entityClass of Object.values(entities)) {
-			await remult.repo(entityClass).deleteMany({ where: { id: { $ne: null } } })
-		}
-	}
-
 	function initRemult(dbType: "json" | "sqlite"): { remult: Remult; cleanup?: () => Promise<void> } {
 		const tempDir = "./zztemp"
 		switch (dbType) {
@@ -32,6 +26,12 @@ function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType:
 
 				return { remult: new Remult(db) }
 			}
+		}
+	}
+
+	async function clearTables() {
+		for (const entityClass of Object.values(entities)) {
+			await remult.repo(entityClass).deleteMany({ where: { id: { $ne: "" } } })
 		}
 	}
 
