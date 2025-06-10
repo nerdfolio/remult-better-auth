@@ -18,7 +18,7 @@
 	"scripts": {
 		"test": "vitest run",
 		"build": "tsup-node",
-		"generate-example": "tsx ./src/cli.ts generate ./src/schema.example.ts"
+		"generate-example": "tsx ./src/cli.ts generate ./generated/schema.example.ts"
 	},
 	"packageManager": "pnpm@10.10.0",
 	"engines": {

@@ -1,5 +1,6 @@
 # remult-better-auth
-[better-auth](https://www.better-auth.com) adapter for [remult ORM](https://remult.dev)
+
+Adapter to use [better-auth](https://www.better-auth.com) with [remult ORM](https://remult.dev)
 
 ## Installation
 
@@ -11,7 +12,7 @@ pnpm i @nerdfolio/remult-better-auth
 
 ## Generate Schema
 
-This package comes with a minimalist CLI to generate the relevant `better-auth` schema as `remult` entities:
+This package comes with a single-command CLI to generate the relevant `better-auth` schema as `remult` entities:
 `User, Account, Session, Verification`. After the installation, run:
 
 ```console
@@ -20,7 +21,9 @@ pnpm @nerdfolio/remult-better-auth generate [output-file]
 
 ```
 
-If `output-file` is not provided, the default value is `./auth-schema.ts`
+If `output-file` is not provided, the default value is `./auth-schema.ts`.
+
+Here is [a generated schema example](src/schema.example.ts)
 
 
 ## Usage
