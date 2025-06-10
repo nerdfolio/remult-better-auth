@@ -10,7 +10,9 @@
 	"bin": "./dist/cli.mjs",
 	"keywords": [],
 	"type": "module",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -26,13 +28,13 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
-		"@libsql/client": "^0.15.8",
-		"@types/node": "^22.15.30",
-		"better-auth": "^1.2.8",
-		"remult": "^3.0.4",
+		"@libsql/client": "^0.15.9",
+		"@types/node": "^24.0.0",
+		"better-auth": "^1.2.9",
+		"remult": "^3.0.5",
 		"tsup": "^8.5.0",
 		"tsx": "^4.19.4",
-		"vitest": "^3.2.2"
+		"vitest": "^3.2.3"
 	},
 	"peerDependencies": {
 		"better-auth": "^1.2.8",
