@@ -34,24 +34,28 @@ function transformModel({ modelName, fields }: ModelSchema) {
 	// However, remult does not support this (prob due to needing to support non-sql databases).
 	// So we handle that here and just hardcode the models. Shouldn't be an issue since we're dealing
 	// with 3 known tables.
-	const entityProps = modelName === 'user' ? ['{', trimLines(`
-		deleted: async (_deletedUser) => {
-			await Promise.all([
-				repo(Account).deleteMany({ where: { userId: _deletedUser.id } }),
-				repo(Session).deleteMany({ where: { userId: _deletedUser.id } })
-			])
-			}
-		`, true), '}'].join("\n") : "{}"
+
+	const entityProps =
+		modelName === "user" ? trimLines(`{
+		__deleted: async (_deletedUser) => {
+			____await Promise.all([
+				______repo(Account).deleteMany({ where: { userId: _deletedUser.id } }),
+				______repo(Session).deleteMany({ where: { userId: _deletedUser.id } })
+			____])
+		__}
+	}`).replaceAll('__', "  ") : "{}"
 
 	const entity = trimLines(`
-	@Entity<${className}>('${modelName}', ${entityProps})
+	@Entity<${className}>('${modelName}', {{ENTITY_PROPS}})
 	export class ${className} {
 		{{FIELDS}}
 	}
 	`)
 
-	return entity.replace(
-		"{{FIELDS}}",
-		trimLines(fieldList.map((f) => transformField({ ...f, modelName })).join("\n\n"), true)
-	)
+	return entity
+		.replace("{{ENTITY_PROPS}}", entityProps)
+		.replace(
+			"{{FIELDS}}",
+			trimLines(fieldList.map((f) => transformField({ ...f, modelName })).join("\n\n"), true)
+		)
 }
