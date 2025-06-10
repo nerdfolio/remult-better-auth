@@ -9,8 +9,8 @@ export function generateSchemaCode(tables: BetterAuthDbSchema) {
 	return trimLines(`
 	import {Entity, Fields, Relations, Validators} from 'remult'
 
-	<ENTITIES>
-	`).replace("<ENTITIES>", Object.values(tables).map(transformModel).join("\n\n\n"))
+	{{ENTITIES}}
+	`).replace("{{ENTITIES}}", Object.values(tables).map(transformModel).join("\n\n\n"))
 }
 
 function transformModel({ modelName, fields }: ModelSchema) {
@@ -26,15 +26,17 @@ function transformModel({ modelName, fields }: ModelSchema) {
 			})()
 	const fieldList = prependFields.concat(Object.values(fields) as CustomFieldAttribute<FieldType>[])
 
+	const className = modelNameToClassName(modelName)
+
 	const entity = trimLines(`
-	@Entity('${modelName}', {})
-	export class ${modelNameToClassName(modelName)} {
-		<FIELDS>
+	@Entity<${className}>('${modelName}', {})
+	export class ${className} {
+		{{FIELDS}}
 	}
 	`)
 
 	return entity.replace(
-		"<FIELDS>",
+		"{{FIELDS}}",
 		trimLines(fieldList.map((f) => transformField({ ...f, modelName })).join("\n\n"), true)
 	)
 }

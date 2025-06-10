@@ -86,15 +86,8 @@ function useTempDir(subdir: string) {
 	const tempDir = path.join(os.tmpdir(), subdir)
 	return {
 		tempDir,
-		deleteTempDir: async () => {
-			console.log("deleting---------------------", tempDir)
-			// try {
-			// 	rmSync(tempDir, { recursive: true })
-			// } catch (e:) {
-
-			// }
-			rmSync(tempDir, { recursive: true })
-		},
+		deleteTempDir: async () => rmSync(tempDir, { recursive: true })
+		,
 	}
 }
 

@@ -12,13 +12,17 @@ export function transformWhereClause(where: CleanedWhere[] = []) {
 		}
 
 		if (w.connector === "OR") {
-			console.log("OR", w)
+			// This situation does not show up in adapter tests. Just log it if it comes up to see
+			// realistic data points
+			console.warn("OR", w)
 			const [opKey, opValue] = transformWhereOp(w)
 			return ["$or", { [opKey]: opValue }]
 		}
 
 		if (w.operator) {
-			console.log("Where with op only", w)
+			// This situation does not show up in adapter tests. Just log it if it comes up to see
+			// realistic data points
+			console.warn("Where with op only", w)
 			return transformWhereOp(w)
 		}
 	})

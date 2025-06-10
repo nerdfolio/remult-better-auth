@@ -25,10 +25,6 @@ export function transformField<T extends FieldType>({
 		email: type === "string" && fieldName === "email" ? true : undefined,
 	})
 
-	if (fieldName?.startsWith("email")) {
-		console.log("FIELD:", fieldName, "type", type)
-	}
-
 	switch (type) {
 		case "string":
 			if (__cuid) {
@@ -77,6 +73,8 @@ export function transformField<T extends FieldType>({
 		if (references.model !== "user") {
 			throw new Error(`Unknown references: ${JSON.stringify(references)}`)
 		}
+
+		console.log("REFERENCE", modelName, references)
 
 		const fromClass = modelNameToClassName(modelName)
 		const toClass = modelNameToClassName(references.model)
