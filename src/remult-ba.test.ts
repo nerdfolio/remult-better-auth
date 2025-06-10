@@ -8,7 +8,7 @@ import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { remultAdapter } from "./remult-ba"
-import { generateSchemaFile } from "./generate-schema"
+import { generateRemultSchema } from "./remult-generate-schema"
 
 const TEST_OPTIONS: BetterAuthOptions = {
 	user: {
@@ -26,7 +26,7 @@ describe("remult-better-auth", async () => {
 		mkdirSync(testDir, { recursive: true })
 	}
 
-	const schemaFile = await generateSchemaFile({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
+	const schemaFile = await generateRemultSchema({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
 	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
 
 	afterAll(async () => {

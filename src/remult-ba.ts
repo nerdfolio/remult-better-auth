@@ -2,6 +2,7 @@ import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better
 import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
+import { getAuthTables } from "better-auth/db"
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -36,6 +37,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 		adapter: () => {
 			return {
 				async createSchema({ file, tables }) {
+					console.log("getAuthDb", getAuthTables({}))
 					return {
 						code: transformSchema(tables),
 						path: file ?? "./auth-schema.ts",

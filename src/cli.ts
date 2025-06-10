@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { setTimeout } from "node:timers/promises"
-import { generateSchemaFile } from "./generate-schema"
+import { generateRemultSchema } from "./remult-generate-schema"
 
 async function main() {
 	await setTimeout(1) // so that all the node import warnings get printed first
@@ -14,7 +14,7 @@ async function main() {
 		)
 	}
 
-	await generateSchemaFile({ options: {}, file })
+	await generateRemultSchema({ options: {}, file })
 }
 
 main()
