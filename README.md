@@ -1,2 +1,2 @@
 # remult-better-auth
-Better Auth adapter for Remult arm
+Better Auth adapter for Remult ORM

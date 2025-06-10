@@ -6,12 +6,11 @@
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
 		"esModuleInterop": true,
-		"jsx": "preserve",
 		"allowJs": true,
 		"strict": true,
 		"noEmit": true,
 		"declaration": true,
 		"experimentalDecorators": true
 	},
-	"include": ["src/**/*", "db/**/*"]
+	"include": ["src/**/*"]
 }

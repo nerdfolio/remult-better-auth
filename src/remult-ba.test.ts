@@ -1,5 +1,4 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs"
-import os from "node:os"
 import path from "node:path"
 import { createClient } from "@libsql/client"
 import type { BetterAuthOptions } from "better-auth"
@@ -11,7 +10,6 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { generateSchemaFile } from "./generate-schema"
 import { remultAdapter } from "./remult-ba"
 
-const TEMP_ROOT = os.tmpdir()  // "./zztemp" as const
 const TEST_OPTIONS: BetterAuthOptions = {
 	user: {
 		fields: {
@@ -20,26 +18,28 @@ const TEST_OPTIONS: BetterAuthOptions = {
 	},
 }
 
+type TestDatabaseProvider = JsonFileDataProvider | SqlDatabase | InMemoryDataProvider
+
 describe("remult-better-auth", async () => {
-	const schemaFile = await generateSchemaFile({ options: TEST_OPTIONS, file: path.join(TEMP_ROOT, "test-schema.ts") })
+	const testDir = path.join("./zztemp", "remult-better-auth-test")
+	if (!existsSync(testDir)) {
+		mkdirSync(testDir, { recursive: true })
+	}
+
+	const schemaFile = await generateSchemaFile({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
 	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
+
 	afterAll(async () => {
-		rmSync(schemaFile)
+		rmSync(testDir, { recursive: true })
 	})
 
-	describe("memory db", () => testSuite(testEntities, "memory"))
-	describe("json db", () => testSuite(testEntities, "json"))
-	describe("sqlite db", () => testSuite(testEntities, "sqlite"))
+	describe("memory db", () => testSuite(testEntities, initDatabaseProvider("memory", "")))
+	describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
+	describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
 })
 
-async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite" | "memory") {
-	const {
-		provider,
-		cleanup = async () => {
-			/*no-op*/
-		},
-	} = setupDatabaseProvider(dbType)
-	const remult = new Remult(provider)
+async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: TestDatabaseProvider) {
+	const remult = new Remult(dbProvider)
 
 	const adapterFn = remultAdapter(remult, {
 		authEntities,
@@ -56,10 +56,6 @@ async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbTyp
 		if (remult.dataProvider.ensureSchema) {
 			await remult.dataProvider.ensureSchema(metadata)
 		}
-	})
-
-	afterAll(async () => {
-		await cleanup()
 	})
 
 	await runAdapterTest({
@@ -89,45 +85,21 @@ async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbTyp
 	})
 }
 
-function useTempDir(subdir: string) {
-	const tempDir = path.join(TEMP_ROOT, subdir)
-	return {
-		tempDir,
-		deleteTempDir: async () => rmSync(tempDir, { recursive: true }),
-	}
-}
-
-function setupDatabaseProvider(type: "json" | "sqlite" | "memory"): {
-	provider: JsonFileDataProvider | SqlDatabase | InMemoryDataProvider
-	cleanup?: () => Promise<void>
-} {
-	const { tempDir, deleteTempDir } = useTempDir(`remult-better-auth-test-${type}`)
-
+function initDatabaseProvider(
+	type: "json" | "sqlite" | "memory", testDir: string
+): TestDatabaseProvider {
 	switch (type) {
 		case "json":
-			return {
-				provider: new JsonFileDataProvider(tempDir),
-				cleanup: deleteTempDir,
-			}
-		case "sqlite": {
-			if (!existsSync(tempDir)) {
-				mkdirSync(tempDir)
-			}
-			return {
-				provider: new SqlDatabase(
-					new TursoDataProvider(
-						createClient({
-							url: `file:${path.join(tempDir, "test-db.sqlite")}`,
-						})
-					)
-				),
-				cleanup: deleteTempDir,
-			}
-		}
-
+			return new JsonFileDataProvider(testDir)
+		case "sqlite":
+			return new SqlDatabase(
+				new TursoDataProvider(
+					createClient({
+						url: `file:${path.join(testDir, "test-db.sqlite")}`,
+					})
+				)
+			)
 		default:
-			return {
-				provider: new InMemoryDataProvider(),
-			}
+			return new InMemoryDataProvider()
 	}
 }
