@@ -7,8 +7,8 @@ import { type ClassType, InMemoryDataProvider, Remult, SqlDatabase } from "remul
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
-import { generateSchemaFile } from "./generate-schema"
 import { remultAdapter } from "./remult-ba"
+import { generateSchemaFile } from "./generate-schema"
 
 const TEST_OPTIONS: BetterAuthOptions = {
 	user: {
