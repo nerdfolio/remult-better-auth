@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { setTimeout } from "node:timers/promises"
 import { generateSchemaFile } from "./generate-schema"
 
