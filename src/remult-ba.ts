@@ -2,7 +2,6 @@ import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better
 import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
-import { getAuthTables } from "better-auth/db"
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -31,13 +30,12 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 	return createAdapter({
 		config: {
 			adapterId: "remult",
-			adapterName: "Remult Adapter",
+			adapterName: "Remult BetterAuth Adapter",
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
 		adapter: () => {
 			return {
 				async createSchema({ file, tables }) {
-					console.log("getAuthDb", getAuthTables({}))
 					return {
 						code: transformSchema(tables),
 						path: file ?? "./auth-schema.ts",
@@ -92,7 +90,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 							where: transformedWhere,
 							orderBy,
 							limit: offset, // offset acts as pageSize
-							page: 1        // then we skip page 0 and slice to get limit
+							page: 1, // then we skip page 0 and slice to get limit
 						})) as T[]
 
 						return rows.slice(0, limit)

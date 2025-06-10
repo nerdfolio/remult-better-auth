@@ -1,5 +1,5 @@
-import type { BetterAuthDbSchema, FieldType } from "better-auth/db"
-import { type CustomFieldAttribute, DEFAULT_ID_FIELD, transformField } from "./transform-field"
+import type { BetterAuthDbSchema } from "better-auth/db"
+import { remultIdField, transformField } from "./transform-field"
 import { modelNameToClassName, trimLines } from "./utils"
 
 type ValueOf<T> = T[keyof T]
@@ -14,21 +14,10 @@ export function transformSchema(tables: BetterAuthDbSchema) {
 }
 
 function transformModel({ modelName, fields }: ModelSchema) {
-	//
-	// better-auth schema doesn't seem to have an id field, add it as 1st field
-	//
-	const prependFields =
-		"id" in fields
-			? []
-			: (() => {
-				console.info(`better-auth schema for model "${modelName}" does not specify an "id" field. Prepending one.`)
-				return [DEFAULT_ID_FIELD]
-			})()
-	const fieldList = prependFields.concat(Object.values(fields) as CustomFieldAttribute<FieldType>[])
+	const transformedFields = Object.values(fields).map((f) => transformField({ ...f, modelName }))
+	const allFields = [remultIdField({ type: "cuid" })].concat(transformedFields)
 
 	const className = modelNameToClassName(modelName)
-
-
 	const entity = trimLines(`
 	@Entity<${className}>('${modelName}', {})
 	export class ${className} {
@@ -36,10 +25,7 @@ function transformModel({ modelName, fields }: ModelSchema) {
 	}
 	`)
 
-	return entity.replace(
-		"{{FIELDS}}",
-		trimLines(fieldList.map((f) => transformField({ ...f, modelName })).join("\n\n"), true)
-	)
+	return entity.replace("{{FIELDS}}", trimLines(allFields.join("\n\n"), true))
 }
 
 // function generateEntityProps(modelName: string) {
