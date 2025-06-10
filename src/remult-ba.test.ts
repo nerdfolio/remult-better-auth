@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, rmSync } from "node:fs"
+import os from "node:os"
 import path from "node:path"
 import { createClient } from "@libsql/client"
 import type { BetterAuthOptions } from "better-auth"
@@ -9,45 +11,20 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest"
 import { remultAdapter } from "./remult-ba"
 import * as authEntities from "./schema.example"
 
-function initRemultForTest(entities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite" | "memory") {
-	function initRemult(dbType: "json" | "sqlite" | "memory"): { remult: Remult; cleanup?: () => Promise<void> } {
-		const tempDir = "./zztemp"
-		switch (dbType) {
-			case "json":
-				return { remult: new Remult(new JsonFileDataProvider(tempDir)) }
-			case "sqlite": {
-				const db = new SqlDatabase(
-					new TursoDataProvider(
-						createClient({
-							url: `file:${path.join(tempDir, "test-db.sqlite")}`,
-						})
-					)
-				)
+describe("remult-better-auth", async () => {
+	describe("memory db", () => testSuite("memory"))
+	describe("json db", () => testSuite("json"))
+	describe("sqlite db", () => testSuite("sqlite"))
+})
 
-				return { remult: new Remult(db) }
-			}
-			default:
-				return { remult: new Remult(new InMemoryDataProvider()) }
-		}
-	}
-
-	async function clearTables() {
-		for (const entityClass of Object.values(entities)) {
-			await remult.repo(entityClass).deleteMany({ where: { id: { $ne: "" } } })
-		}
-	}
-
-	const { remult, cleanup = clearTables } = initRemult(dbType)
-
-	return {
-		remult,
-		cleanup,
-		testEntities: entities,
-	}
-}
-
-describe("remult-better-auth adapter tests", async () => {
-	const { remult, testEntities, cleanup } = initRemultForTest(authEntities, "memory")
+async function testSuite(dbType: "json" | "sqlite" | "memory") {
+	const {
+		provider,
+		cleanup = async () => {
+			/*no-op*/
+		},
+	} = setupDatabaseProvider(dbType)
+	const remult = new Remult(provider)
 
 	const testOptions: BetterAuthOptions = {
 		user: {
@@ -57,24 +34,25 @@ describe("remult-better-auth adapter tests", async () => {
 		},
 	}
 
+	const adapterFn = remultAdapter(remult, {
+		authEntities,
+		debugLogs: {
+			// If your adapter config allows passing in debug logs, then pass this here.
+			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
+		},
+	})
+
 	beforeAll(async () => {
-		const metadata = Object.values(testEntities).map((entityClass) => remult.repo(entityClass).metadata)
+		const metadata = Object.values(authEntities).map(
+			(entityClass: ClassType<unknown>) => remult.repo(entityClass).metadata
+		)
 		if (remult.dataProvider.ensureSchema) {
 			await remult.dataProvider.ensureSchema(metadata)
 		}
 	})
 
 	afterAll(async () => {
-		// Run DB cleanup here...
 		await cleanup()
-	})
-
-	const adapterFn = remultAdapter(remult, {
-		authEntities: testEntities,
-		debugLogs: {
-			// If your adapter config allows passing in debug logs, then pass this here.
-			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
-		},
 	})
 
 	await runAdapterTest({
@@ -102,4 +80,55 @@ describe("remult-better-auth adapter tests", async () => {
 		const res = await adapterFn({}).findMany({ model: "user", offset: 3 })
 		expect(res).toHaveLength(4)
 	})
-})
+}
+
+function useTempDir(subdir: string) {
+	const tempDir = path.join(os.tmpdir(), subdir)
+	return {
+		tempDir,
+		deleteTempDir: async () => {
+			console.log("deleting---------------------", tempDir)
+			// try {
+			// 	rmSync(tempDir, { recursive: true })
+			// } catch (e:) {
+
+			// }
+			rmSync(tempDir, { recursive: true })
+		},
+	}
+}
+
+function setupDatabaseProvider(type: "json" | "sqlite" | "memory"): {
+	provider: JsonFileDataProvider | SqlDatabase | InMemoryDataProvider
+	cleanup?: () => Promise<void>
+} {
+	const { tempDir, deleteTempDir } = useTempDir(`remult-better-auth-test-${type}`)
+
+	switch (type) {
+		case "json":
+			return {
+				provider: new JsonFileDataProvider(tempDir),
+				cleanup: deleteTempDir,
+			}
+		case "sqlite": {
+			if (!existsSync(tempDir)) {
+				mkdirSync(tempDir)
+			}
+			return {
+				provider: new SqlDatabase(
+					new TursoDataProvider(
+						createClient({
+							url: `file:${path.join(tempDir, "test-db.sqlite")}`,
+						})
+					)
+				),
+				cleanup: deleteTempDir,
+			}
+		}
+
+		default:
+			return {
+				provider: new InMemoryDataProvider(),
+			}
+	}
+}
