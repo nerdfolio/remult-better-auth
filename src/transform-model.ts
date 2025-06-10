@@ -7,7 +7,7 @@ type ModelSchema = ValueOf<BetterAuthDbSchema>
 
 export function generateSchemaCode(tables: BetterAuthDbSchema) {
 	return trimLines(`
-	import {Entity, Fields, Relations, Validators} from 'remult'
+	import {Entity, Fields, Relations, Validators, repo} from 'remult'
 
 	{{ENTITIES}}
 	`).replace("{{ENTITIES}}", Object.values(tables).map(transformModel).join("\n\n\n"))
@@ -28,8 +28,23 @@ function transformModel({ modelName, fields }: ModelSchema) {
 
 	const className = modelNameToClassName(modelName)
 
+	// TODO: we may need to use defaultModelName here instead of modelName in case user has a custom mapping
+	// NOTE: better-auth has a cascade delete on foreign key from session-to-user and account-to-user.
+	// Ideally we should declare that foreign key constraint where the relation is actually defined.
+	// However, remult does not support this (prob due to needing to support non-sql databases).
+	// So we handle that here and just hardcode the models. Shouldn't be an issue since we're dealing
+	// with 3 known tables.
+	const entityProps = modelName === 'user' ? ['{', trimLines(`
+		deleted: async (_deletedUser) => {
+			await Promise.all([
+				repo(Account).deleteMany({ where: { userId: _deletedUser.id } }),
+				repo(Session).deleteMany({ where: { userId: _deletedUser.id } })
+			])
+			}
+		`, true), '}'].join("\n") : "{}"
+
 	const entity = trimLines(`
-	@Entity<${className}>('${modelName}', {})
+	@Entity<${className}>('${modelName}', ${entityProps})
 	export class ${className} {
 		{{FIELDS}}
 	}
