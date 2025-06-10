@@ -74,8 +74,6 @@ export function transformField<T extends FieldType>({
 			throw new Error(`Unknown references: ${JSON.stringify(references)}`)
 		}
 
-		console.log("REFERENCE", modelName, references)
-
 		const fromClass = modelNameToClassName(modelName)
 		const toClass = modelNameToClassName(references.model)
 		field = `${field.trim()}

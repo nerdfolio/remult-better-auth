@@ -1,6 +1,6 @@
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
-import { generateSchemaCode } from "./transform-model"
+import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 
 export interface RemultAdapterOptions {
@@ -37,7 +37,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 			return {
 				async createSchema({ file, tables }) {
 					return {
-						code: generateSchemaCode(tables),
+						code: transformSchema(tables),
 						path: file ?? "./auth-schema.ts",
 						overwrite: true,
 					}

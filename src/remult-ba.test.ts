@@ -8,16 +8,31 @@ import { type ClassType, InMemoryDataProvider, Remult, SqlDatabase } from "remul
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
+import { generateSchemaFile } from "./generate-schema"
 import { remultAdapter } from "./remult-ba"
-import * as authEntities from "./schema.example"
+
+const TEMP_ROOT = os.tmpdir()  // "./zztemp" as const
+const TEST_OPTIONS: BetterAuthOptions = {
+	user: {
+		fields: {
+			email: "email_address",
+		},
+	},
+}
 
 describe("remult-better-auth", async () => {
-	describe("memory db", () => testSuite("memory"))
-	describe("json db", () => testSuite("json"))
-	describe("sqlite db", () => testSuite("sqlite"))
+	const schemaFile = await generateSchemaFile({ options: TEST_OPTIONS, file: path.join(TEMP_ROOT, "test-schema.ts") })
+	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
+	afterAll(async () => {
+		rmSync(schemaFile)
+	})
+
+	describe("memory db", () => testSuite(testEntities, "memory"))
+	describe("json db", () => testSuite(testEntities, "json"))
+	describe("sqlite db", () => testSuite(testEntities, "sqlite"))
 })
 
-async function testSuite(dbType: "json" | "sqlite" | "memory") {
+async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbType: "json" | "sqlite" | "memory") {
 	const {
 		provider,
 		cleanup = async () => {
@@ -25,14 +40,6 @@ async function testSuite(dbType: "json" | "sqlite" | "memory") {
 		},
 	} = setupDatabaseProvider(dbType)
 	const remult = new Remult(provider)
-
-	const testOptions: BetterAuthOptions = {
-		user: {
-			fields: {
-				email: "email_address",
-			},
-		},
-	}
 
 	const adapterFn = remultAdapter(remult, {
 		authEntities,
@@ -57,7 +64,7 @@ async function testSuite(dbType: "json" | "sqlite" | "memory") {
 
 	await runAdapterTest({
 		getAdapter: async (customOptions = {}) => {
-			return adapterFn({ ...testOptions, ...customOptions })
+			return adapterFn({ ...TEST_OPTIONS, ...customOptions })
 		},
 	})
 
@@ -83,11 +90,10 @@ async function testSuite(dbType: "json" | "sqlite" | "memory") {
 }
 
 function useTempDir(subdir: string) {
-	const tempDir = path.join(os.tmpdir(), subdir)
+	const tempDir = path.join(TEMP_ROOT, subdir)
 	return {
 		tempDir,
-		deleteTempDir: async () => rmSync(tempDir, { recursive: true })
-		,
+		deleteTempDir: async () => rmSync(tempDir, { recursive: true }),
 	}
 }
 
