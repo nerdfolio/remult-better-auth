@@ -1,3 +1,4 @@
+import type { BetterAuthOptions } from "better-auth"
 import type { BetterAuthDbSchema } from "better-auth/db"
 import { remultIdField, transformField } from "./transform-field"
 import { modelNameToClassName, trimLines } from "./utils"
@@ -5,16 +6,21 @@ import { modelNameToClassName, trimLines } from "./utils"
 type ValueOf<T> = T[keyof T]
 type ModelSchema = ValueOf<BetterAuthDbSchema>
 
-export function transformSchema(tables: BetterAuthDbSchema) {
+export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthOptions = {}) {
+
 	return trimLines(`
 	import {Entity, Fields, Relations, Validators} from 'remult'
 
 	{{ENTITIES}}
-	`).replace("{{ENTITIES}}", Object.values(tables).map(transformModel).join("\n\n\n"))
+	`).replace("{{ENTITIES}}",
+		Object.values(tables).map(({ modelName, fields }) => transformModel({
+			modelName,
+			fields,
+			useNumberId: options.advanced?.database?.useNumberId
+		})).join("\n\n\n"))
 }
 
-function transformModel({ modelName, fields }: ModelSchema) {
-
+function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useNumberId?: boolean }) {
 	const className = modelNameToClassName(modelName)
 	const entity = trimLines(`
 	@Entity<${className}>('${modelName}', {})
@@ -24,7 +30,7 @@ function transformModel({ modelName, fields }: ModelSchema) {
 	`)
 
 	const transformedFields = Object.values(fields).map((f) => transformField(modelName, f))
-	const allFields = [remultIdField({ type: "cuid" })].concat(transformedFields)
+	const allFields = [remultIdField({ useNumberId })].concat(transformedFields)
 
 	return entity.replace("{{FIELDS}}", trimLines(allFields.join("\n\n"), true))
 }

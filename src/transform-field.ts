@@ -1,14 +1,17 @@
 import type { FieldAttribute, FieldType } from "better-auth/db"
-import { RemultBetterAuthError, modelNameToClassName } from "./utils"
+import { modelNameToClassName } from "./utils"
 
-export function remultIdField({ name = "id", type }: { name?: string; type: "cuid" }) {
-	if (type === "cuid") {
-		return `@Fields.cuid({required: true, dbReadOnly: true})
-		${name} = ''
-	`.trim()
+export function remultIdField({ name = "id", useNumberId = false }: { name?: string; useNumberId?: boolean }) {
+	if (useNumberId) {
+		// NOTE: sqlite says "autoincrement" adds unnecessary overhead (https://www.sqlite.org/autoinc.html)
+		// however we have to use it here because remult does not give us access to "primary key" constraint
+		//
+		return `@Fields.autoIncrement({required: true, dbReadOnly: true})
+		${name} = 0`.trim()
 	}
 
-	throw new RemultBetterAuthError(`id field type [${type}] not supported`)
+	return `@Fields.cuid({required: true, dbReadOnly: true})
+		${name} = ''`.trim()
 }
 
 export function transformField<T extends FieldType>(modelName: string, {
@@ -26,8 +29,6 @@ export function transformField<T extends FieldType>(modelName: string, {
 		email: type === "string" && fieldName === "email" ? true : undefined,
 		defaultValue
 	})
-
-	console.log("support numberic id or say not supported in README")
 
 	switch (type) {
 		case "string":

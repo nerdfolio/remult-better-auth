@@ -2,6 +2,7 @@ import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better
 import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
+import { RemultBetterAuthError } from "./utils"
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -22,7 +23,9 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 	function getRepo(modelName: string) {
 		const repo = authRepos[modelName]
 		if (!repo) {
-			; `The auth model "${modelName}" not found. Is it in the authEntities passed to the remult-better-auth adapter?`
+			throw new RemultBetterAuthError(
+				`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth adapter configuration?`
+			)
 		}
 		return repo
 	}
@@ -31,13 +34,15 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 		config: {
 			adapterId: "remult",
 			adapterName: "Remult BetterAuth Adapter",
+			supportsNumericIds: true,
+			supportsJSON: true,
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
-		adapter: () => {
+		adapter: ({ options }) => {
 			return {
 				async createSchema({ file, tables }) {
 					return {
-						code: transformSchema(tables),
+						code: transformSchema(tables, options),
 						path: file ?? "./auth-schema.ts",
 						overwrite: true,
 					}
