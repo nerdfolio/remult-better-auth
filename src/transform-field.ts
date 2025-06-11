@@ -23,52 +23,68 @@ export function transformField<T extends FieldType>(modelName: string, {
 	references,
 	defaultValue
 }: FieldAttribute<T>) {
-	let field = ""
-	const props = transformFieldProps({
+	function isNullable() {
+		if ((type === "string" && fieldName === "email")
+			|| (type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? ""))
+			|| (type === "boolean")
+		) return false
+
+		return undefined
+	}
+
+	const props = Object.fromEntries(Object.entries({
 		required,
 		unique,
+		defaultValue,
 		email: type === "string" && fieldName === "email" ? true : undefined,
-		defaultValue
-	})
+		allowNull: isNullable(),
+		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
+		// NOTE: dbReadOnly doesn't seem to work as expected
+		//
+		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
+	}).filter(([_k, v]) => typeof v !== 'undefined'))
 
+	const transformedProps = transformFieldProps(props)
+
+	let field = ""
 	switch (type) {
 		case "string":
-			field = `@Fields.string(${props})
+			field = `@Fields.string(${transformedProps})
 			${fieldName} = ''
 			`
 			break
 		case "string[]":
-			field = `@Fields.json(${props})
+			field = `@Fields.json(${transformedProps})
 			${fieldName} : string[] = []
 			`
 			break
 		case "number":
-			field = `@Fields.integer(${props})
+			field = `@Fields.integer(${transformedProps})
 			${fieldName} : number
 			`
 			break
 		case "number[]":
-			field = `@Fields.json(${props})
+			field = `@Fields.json(${transformedProps})
 			${fieldName} : number[] = []
 			`
 			break
 
 		case "boolean":
-			field = `@Fields.boolean(${props})
+			field = `@Fields.boolean(${transformedProps})
 			${fieldName} = false
 			`
 			break
 		case "date":
 			if (fieldName === "createdAt") {
-				field = `@Fields.createdAt(${props})
-				${fieldName} = new Date()
+				field = `@Fields.createdAt(${transformedProps})
+				${fieldName}! : Date
 				`
 			} else if (fieldName === "updatedAt") {
-				field = `@Fields.updatedAt(${props})
-				${fieldName} = new Date()
+				field = `@Fields.updatedAt(${transformedProps})
+				${fieldName}! : Date
 				`
 			} else {
-				field = `@Fields.date(${props})
+				field = `@Fields.date(${transformedProps})
 			  ${fieldName} = new Date()
 			  `
 			}

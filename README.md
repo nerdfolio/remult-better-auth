@@ -23,7 +23,7 @@ pnpm @nerdfolio/remult-better-auth generate [output-file]
 
 If `output-file` is not provided, the default value is `./auth-schema.ts`.
 
-Here is [a generated schema example](src/schema.example.ts)
+Here is [a generated schema example](examples/generated-schema.ts)
 
 
 ## Usage
