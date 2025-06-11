@@ -6,11 +6,12 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 		// NOTE: sqlite says "autoincrement" adds unnecessary overhead (https://www.sqlite.org/autoinc.html)
 		// however we have to use it here because remult does not give us access to "primary key" constraint
 		//
-		return `@Fields.autoIncrement({required: true, dbReadOnly: true})
-		${name} = 0`.trim()
+		return `@Fields.autoIncrement({required: true})
+		${name}: number`.trim()
 	}
 
-	return `@Fields.cuid({required: true, dbReadOnly: true})
+	// better-auth handles id generation for us and pass it to create() so string type suffices. No need for cuid().
+	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique()})
 		${name} = ''`.trim()
 }
 

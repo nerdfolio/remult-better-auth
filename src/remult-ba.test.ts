@@ -22,9 +22,14 @@ type TestDatabaseProvider = JsonFileDataProvider | SqlDatabase | InMemoryDataPro
 
 describe("remult-better-auth", async () => {
 	const testDir = path.join("./zztemp", "remult-better-auth-test")
-	if (!existsSync(testDir)) {
-		mkdirSync(testDir, { recursive: true })
+	//
+	// delete and recreate test-dir to clear out previous result
+	//
+	if (existsSync(testDir)) {
+		rmSync(testDir, { recursive: true })
 	}
+	mkdirSync(testDir, { recursive: true })
+
 
 	const schemaFile = await generateRemultSchema({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
 	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
@@ -85,9 +90,7 @@ async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbPro
 	})
 }
 
-function initDatabaseProvider(
-	type: "json" | "sqlite" | "memory", testDir: string
-): TestDatabaseProvider {
+function initDatabaseProvider(type: "json" | "sqlite" | "memory", testDir: string): TestDatabaseProvider {
 	switch (type) {
 		case "json":
 			return new JsonFileDataProvider(testDir)

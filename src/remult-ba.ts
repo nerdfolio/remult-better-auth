@@ -24,7 +24,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 		const repo = authRepos[modelName]
 		if (!repo) {
 			throw new RemultBetterAuthError(
-				`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth adapter configuration?`
+				`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth configuration.`
 			)
 		}
 		return repo
@@ -47,14 +47,13 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						overwrite: true,
 					}
 				},
-				async create({ model, data: values }) {
-					const modelRepo = getRepo(model)
-					modelRepo.create()
-					return modelRepo.insert(values) as Promise<typeof values>
+				async create({ model, data }) {
+					// NOTE: better-auth already generates an id for us. It's in data.
+					// NOTE: for some reason, remult doesn't persist on "save" but does on "insert"
+					return getRepo(model).insert(data) as Promise<typeof data>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
-					const modelRepo = getRepo(model)
-					return modelRepo.findOne({
+					return getRepo(model).findOne({
 						where: transformWhereClause(where),
 					}) as Promise<T>
 				},
@@ -118,8 +117,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					return result.rows satisfies T[]
 				},
 				async count({ model, where }) {
-					const modelRepo = getRepo(model)
-					return modelRepo.count(transformWhereClause(where))
+					return getRepo(model).count(transformWhereClause(where))
 				},
 				async update({ model, where, update: values }) {
 					//
@@ -131,14 +129,12 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						)
 					}
 
-					const modelRepo = getRepo(model)
-					return modelRepo.update(where[0].value as string | number, values as Record<string, unknown>) as Promise<
-						typeof values
-					>
+					return getRepo(model).update(
+						where[0].value as string | number, values as Record<string, unknown>
+					) as Promise<typeof values>
 				},
 				async updateMany({ model, where, update: values }) {
-					const modelRepo = getRepo(model)
-					return modelRepo.updateMany({
+					return getRepo(model).updateMany({
 						where: transformWhereClause(where),
 						set: values as Record<string, unknown>,
 					})
@@ -153,11 +149,10 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						)
 					}
 
-					const modelRepo = getRepo(model)
 					try {
-						await modelRepo.delete(where[0].value as string | number)
+						await getRepo(model).delete(where[0].value as string | number)
 					} catch (e: unknown) {
-						// NOTE: remult should have an explicit error class or error code to make user error handling cleaner
+						// NOTE: remult doesn't have explicit error class or error code so we gotta do this manually
 						const { message, httpStatusCode } = e as ErrorInfo
 						if (httpStatusCode === 404 || message?.includes("not found")) {
 							// absorb this error because better-auth expects deleting non-existing id to not throw
@@ -167,8 +162,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 					}
 				},
 				async deleteMany({ model, where }) {
-					const modelRepo = getRepo(model)
-					return modelRepo.deleteMany({ where: transformWhereClause(where) })
+					return getRepo(model).deleteMany({ where: transformWhereClause(where) })
 				},
 				options: adapterCfg,
 			}
