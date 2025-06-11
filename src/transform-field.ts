@@ -6,13 +6,13 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 		// NOTE: sqlite says "autoincrement" adds unnecessary overhead (https://www.sqlite.org/autoinc.html)
 		// however we have to use it here because remult does not give us access to "primary key" constraint
 		//
-		return `@Fields.autoIncrement({required: true})
-		${name}: number`.trim()
+		return `@Fields.autoIncrement({required: true, allowNull: false, allowApiUpdate: false})
+		${name}! : number`.trim()
 	}
 
 	// better-auth handles id generation for us and pass it to create() so string type suffices. No need for cuid().
-	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique()})
-		${name} = ''`.trim()
+	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowNull: false, allowApiUpdate: false})
+		${name}! : string`.trim()
 }
 
 export function transformField<T extends FieldType>(modelName: string, {
@@ -89,7 +89,7 @@ export function transformField<T extends FieldType>(modelName: string, {
 		const toClass = modelNameToClassName(references.model)
 		field = `${field.trim()}
 		@Relations.toOne<${fromClass}, ${toClass}>(() => ${toClass}, "${references.field}")
-		${fieldName?.endsWith("Id") ? `${fieldName.slice(0, -2)} : ${toClass}` : ""}
+		${fieldName?.endsWith("Id") ? `${fieldName.slice(0, -2)}! : ${toClass}` : ""}
 		`
 	}
 
