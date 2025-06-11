@@ -16,35 +16,15 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 }
 
 export function transformField<T extends FieldType>(modelName: string, {
-	fieldName,
+	fieldName = "",
 	type,
 	required,
 	unique,
 	references,
 	defaultValue
 }: FieldAttribute<T>) {
-	function isNullable() {
-		if ((type === "string" && fieldName === "email")
-			|| (type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? ""))
-			|| (type === "boolean")
-		) return false
 
-		return undefined
-	}
-
-	const props = Object.fromEntries(Object.entries({
-		required,
-		unique,
-		defaultValue,
-		email: type === "string" && fieldName === "email" ? true : undefined,
-		allowNull: isNullable(),
-		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
-		// NOTE: dbReadOnly doesn't seem to work as expected
-		//
-		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
-	}).filter(([_k, v]) => typeof v !== 'undefined'))
-
-	const transformedProps = transformFieldProps(props)
+	const transformedProps = transformFieldProps({ required, defaultValue, type, unique, fieldName })
 
 	let field = ""
 	switch (type) {
@@ -85,8 +65,8 @@ export function transformField<T extends FieldType>(modelName: string, {
 				`
 			} else {
 				field = `@Fields.date(${transformedProps})
-			  ${fieldName} = new Date()
-			  `
+					${fieldName} = new Date()
+					`
 			}
 			break
 		default:
@@ -112,37 +92,43 @@ export function transformField<T extends FieldType>(modelName: string, {
 	return field.trim()
 }
 
-function transformFieldProps(props: Record<string, unknown>) {
-	const validators: string[] = []
+function transformNullable({ type, fieldName }: { type: FieldType, fieldName?: string }) {
+	if ((type === "string" && fieldName === "email")
+		|| (type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? ""))
+		|| (type === "boolean")
+	) return false
 
-	const fieldProps = Object.entries(props)
-		.filter(([_k, v]) => typeof v !== "undefined")
-		.map(([k, v]) => {
-			switch (k) {
-				case "unique":
-					validators.push("Validators.unique()")
-					return null
-				case "email":
-					validators.push("Validators.email()")
-					return null
-				case "defaultValue":
-					// remult defaultValue is a function so transform if needed
-					return typeof v === "function"
-						? `${k}: ${v.toString().replace(/\/\*.*\*\//, "")}`
-						: `${k}: () => ${v}`
-				default:
-					return typeof v !== "undefined" ? `${k}: ${v}` : ""
-			}
-		})
-		.concat([
-			validators.length === 0
-				? null
-				: validators.length === 1
-					? `validate: ${validators[0]}`
-					: `validate: [${validators.join(", ")}]`,
-		])
-		.filter((s) => !!s)
-		.join(", ")
+	return undefined
+}
 
-	return Object.keys(fieldProps).length > 0 ? `{${fieldProps}}` : ""
+function transformValidators({ type, unique, fieldName }: { type: FieldType, unique?: boolean, fieldName?: string }) {
+	const v = [
+		unique ? "Validators.unique()" : undefined,
+		type === "string" && fieldName === "email" ? "Validators.email()" : undefined,
+	].filter((v) => typeof v !== "undefined")
+
+	return v.length > 1 ? `[${v.join(", ")}]` : v.length === 1 ? v[0] : undefined
+}
+
+function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["defaultValue"] }) {
+	// remult defaultValue is a function so transform if needed
+	return typeof defaultValue === "function"
+		? `${defaultValue.toString().replace(/\/\*.*\*\//, "")}`
+		: typeof defaultValue !== "undefined" ? `${defaultValue}` : undefined
+}
+
+function transformFieldProps({ required, defaultValue, type, unique, fieldName }: FieldAttribute): string {
+	const props = Object.entries({
+		required,
+		defaultValue: transformDefaultVal({ defaultValue }),
+		validate: transformValidators({ type, unique, fieldName }),
+		allowNull: transformNullable({ type, fieldName }),
+		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
+		//
+		// NOTE: dbReadOnly doesn't seem to work as expected
+		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
+	}).filter(([_k, v]) => typeof v !== 'undefined')
+		.map(([k, v]) => `${k}: ${v}`)
+
+	return props.length > 0 ? `{${props.join(", ")}}` : ""
 }
