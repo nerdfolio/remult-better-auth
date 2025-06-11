@@ -1,11 +1,9 @@
 import type { FieldAttribute, FieldType } from "better-auth/db"
 import { RemultBetterAuthError, modelNameToClassName } from "./utils"
 
-export type CustomFieldAttribute<T extends FieldType> = FieldAttribute<T> & { modelName: string; __cuid?: boolean }
-
 export function remultIdField({ name = "id", type }: { name?: string; type: "cuid" }) {
 	if (type === "cuid") {
-		return `@Fields.cuid({required: true, validate: Validators.unique()})
+		return `@Fields.cuid({required: true, dbReadOnly: true, validate: Validators.unique()})
 		${name} = ''
 	`.trim()
 	}
@@ -13,14 +11,14 @@ export function remultIdField({ name = "id", type }: { name?: string; type: "cui
 	throw new RemultBetterAuthError(`id field type [${type}] not supported`)
 }
 
-export function transformField<T extends FieldType>({
-	modelName,
+export function transformField<T extends FieldType>(modelName: string, {
 	fieldName,
 	type,
 	required,
 	unique,
-	references
-}: CustomFieldAttribute<T>) {
+	references,
+	...rest
+}: FieldAttribute<T>) {
 	let field = ""
 	const props = transformFieldProps({
 		required,
@@ -28,7 +26,7 @@ export function transformField<T extends FieldType>({
 		email: type === "string" && fieldName === "email" ? true : undefined,
 	})
 
-	console.log("SUPPORT defaultValue")
+	console.log("SUPPORT defaultValue", rest)
 	console.log("support numberic id or say not supported in README")
 	console.log("NEED TO HANDLE field type string[] and number[]")
 
