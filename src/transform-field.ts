@@ -28,7 +28,6 @@ export function transformField<T extends FieldType>(modelName: string, {
 	})
 
 	console.log("support numberic id or say not supported in README")
-	console.log("NEED TO HANDLE field type string[] and number[]")
 
 	switch (type) {
 		case "string":
@@ -36,11 +35,22 @@ export function transformField<T extends FieldType>(modelName: string, {
 			${fieldName} = ''
 			`
 			break
+		case "string[]":
+			field = `@Fields.json(${props})
+			${fieldName} : string[] = []
+			`
+			break
 		case "number":
 			field = `@Fields.integer(${props})
 			${fieldName} : number
 			`
 			break
+		case "number[]":
+			field = `@Fields.json(${props})
+			${fieldName} : number[] = []
+			`
+			break
+
 		case "boolean":
 			field = `@Fields.boolean(${props})
 			${fieldName} = false
@@ -62,7 +72,7 @@ export function transformField<T extends FieldType>(modelName: string, {
 			}
 			break
 		default:
-			throw new Error(`Unimplemented field type: [${type}]`)
+			throw new Error(`Unimplemented field type: ${JSON.stringify({ modelName, fieldName, type, defaultValue })}`)
 	}
 
 	//
