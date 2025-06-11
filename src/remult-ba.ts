@@ -44,6 +44,7 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 				},
 				async create({ model, data: values }) {
 					const modelRepo = getRepo(model)
+					modelRepo.create()
 					return modelRepo.insert(values) as Promise<typeof values>
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {

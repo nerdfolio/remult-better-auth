@@ -3,7 +3,7 @@ import { RemultBetterAuthError, modelNameToClassName } from "./utils"
 
 export function remultIdField({ name = "id", type }: { name?: string; type: "cuid" }) {
 	if (type === "cuid") {
-		return `@Fields.cuid({required: true, dbReadOnly: true, validate: Validators.unique()})
+		return `@Fields.cuid({required: true, dbReadOnly: true})
 		${name} = ''
 	`.trim()
 	}
@@ -17,16 +17,16 @@ export function transformField<T extends FieldType>(modelName: string, {
 	required,
 	unique,
 	references,
-	...rest
+	defaultValue
 }: FieldAttribute<T>) {
 	let field = ""
 	const props = transformFieldProps({
 		required,
 		unique,
 		email: type === "string" && fieldName === "email" ? true : undefined,
+		defaultValue
 	})
 
-	console.log("SUPPORT defaultValue", rest)
 	console.log("support numberic id or say not supported in README")
 	console.log("NEED TO HANDLE field type string[] and number[]")
 
@@ -97,6 +97,11 @@ function transformFieldProps(props: Record<string, unknown>) {
 				case "email":
 					validators.push("Validators.email()")
 					return null
+				case "defaultValue":
+					// remult defaultValue is a function so transform if needed
+					return typeof v === "function"
+						? `${k}: ${v.toString().replace(/\/\*.*\*\//, "")}`
+						: `${k}: () => ${v}`
 				default:
 					return typeof v !== "undefined" ? `${k}: ${v}` : ""
 			}

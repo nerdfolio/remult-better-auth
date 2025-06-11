@@ -14,8 +14,6 @@ export function transformSchema(tables: BetterAuthDbSchema) {
 }
 
 function transformModel({ modelName, fields }: ModelSchema) {
-	const transformedFields = Object.values(fields).map((f) => transformField({ ...f, modelName }))
-	const allFields = [remultIdField({ type: "cuid" })].concat(transformedFields)
 
 	const className = modelNameToClassName(modelName)
 	const entity = trimLines(`
@@ -24,6 +22,9 @@ function transformModel({ modelName, fields }: ModelSchema) {
 		{{FIELDS}}
 	}
 	`)
+
+	const transformedFields = Object.values(fields).map((f) => transformField(modelName, f))
+	const allFields = [remultIdField({ type: "cuid" })].concat(transformedFields)
 
 	return entity.replace("{{FIELDS}}", trimLines(allFields.join("\n\n"), true))
 }
