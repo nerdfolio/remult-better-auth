@@ -1,20 +1,38 @@
 #!/usr/bin/env node
-import { setTimeout } from "node:timers/promises"
+import { defineCommand, runMain } from "citty"
 import { generateRemultSchema } from "./remult-generate-schema"
 
-async function main() {
-	await setTimeout(1) // so that all the node import warnings get printed first
-
-	const defaultFile = "./auth-schema.ts"
-
-	const [command, file = defaultFile] = process.argv.slice(2)
-	if (command !== "generate") {
-		throw new Error(
-			`Unknown command: ${command}. Only "generate out-file" is supported. If out-file is not specified, it defaults to "${defaultFile}"`
-		)
+const generateCmd = defineCommand({
+	meta: {
+		name: "generate",
+		description: "Generate Remult ORM entities for better-auth",
+	},
+	args: {
+		config: {
+			type: "string",
+			description: "Path to better-auth configuration."
+		},
+		output: {
+			type: "string",
+			description: "Path to output file",
+			default: "./auth-schema.ts"
+		}
+	},
+	run: async ({ args: { config, output } }) => {
+		console.log("config", config)
+		return generateRemultSchema({ options: {}, file: output })
 	}
+})
 
-	await generateRemultSchema({ options: {}, file })
-}
+const main = defineCommand({
+	meta: {
+		name: "remult-better-auth",
+		version: "_",
+		description: "Cli to generate Remult ORM entities for better-auth"
+	},
+	subCommands: {
+		generate: generateCmd
+	}
+})
 
-main()
+runMain(main)
