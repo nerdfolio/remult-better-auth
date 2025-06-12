@@ -17,14 +17,17 @@ This package comes with a single-command CLI to generate the relevant `better-au
 
 ```console
 
-pnpm @nerdfolio/remult-better-auth generate [output-file]
+pnpm @nerdfolio/remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
 
 ```
 
-If `output-file` is not provided, the default value is `./auth-schema.ts`.
+`--config` is required. It refers to the auth.ts setup file for your project.
+If `--output` is not provided, the default value is `./auth-schema.ts`.
+
+You may notice that this mimicks `@better-auth/cli`. Our custom cli is necessary because (as of June 2025), @better-auth/cli
+does not use the `createSchema` function from custom adapters. It only supports built-in generators for kysely, drizzle, and prisma.
 
 Here is [a generated schema example](examples/generated-schema.ts)
-
 
 ## Usage
 
