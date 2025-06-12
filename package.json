@@ -1,6 +1,6 @@
 {
-	"name": "@nerdfolio/remult-better-auth",
-	"version": "0.2.0",
+	"name": "remult-better-auth",
+	"version": "0.2.1",
 	"description": "Remult ORM adapter for better-auth",
 	"license": "ISC",
 	"author": "taivo",
@@ -9,16 +9,9 @@
 	"types": "./dist/index.d.ts",
 	"bin": "./dist/cli.mjs",
 	"type": "module",
-	"keywords": [
-		"better-auth",
-		"remult",
-		"orm adapter",
-		"auth adapter"
-	],
+	"keywords": ["better-auth", "remult", "orm adapter", "auth adapter"],
 	"repository": "https://github.com/nerdfolio/remult-better-auth.git",
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"publishConfig": {
 		"access": "public"
 	},
