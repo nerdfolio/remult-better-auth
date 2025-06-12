@@ -1,7 +1,39 @@
 #!/usr/bin/env node
+import { type BetterAuthOptions, logger } from "better-auth"
 import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
 import { generateRemultSchema } from "./remult-generate-schema"
+
+
+async function getBetterAuthOptions(configFile?: string) {
+	const defaultOpts = {} as BetterAuthOptions
+
+	async function loadConfigFile(configFile: string) {
+		const {
+			config: {
+				auth: { options },
+			},
+		} = await loadConfig<{
+			auth: {
+				options: BetterAuthOptions
+			}
+			default?: {
+				options: BetterAuthOptions
+			}
+		}>({
+			configFile,
+			dotenv: true,
+			defaults: { auth: { options: defaultOpts } }
+		})
+
+		return options
+	}
+
+	return {
+		source: configFile,
+		options: configFile ? await loadConfigFile(configFile) : defaultOpts
+	}
+}
 
 const generateCmd = defineCommand({
 	meta: {
@@ -11,32 +43,37 @@ const generateCmd = defineCommand({
 	args: {
 		config: {
 			type: "string",
-			description: "Path to better-auth configuration."
+			description: "Path to better-auth configuration",
+			required: true
 		},
 		output: {
 			type: "string",
 			description: "Path to output file",
-			default: "./auth-schema.ts"
-		}
+			default: "./auth-schema.ts",
+		},
 	},
 	run: async ({ args: { config: configFile, output } }) => {
-		console.log("Loading better-auth options from:", configFile)
-		const { config: { auth: { options } } } = await loadConfig({ configFile })
+		const { source, options } = await getBetterAuthOptions(configFile)
 
-		console.log("Generating schema based on better-auth options", options)
+		if (!source) {
+			logger.info("No better-auth config file found. Using default options:", options)
+		} else {
+			logger.info("Using better-auth options from:", source)
+			logger.info("options:", options)
+		}
 		return generateRemultSchema({ options, file: output })
-	}
+	},
 })
 
 const main = defineCommand({
 	meta: {
 		name: "remult-better-auth",
 		version: "_",
-		description: "Cli to generate Remult ORM entities for better-auth"
+		description: "Cli to generate Remult ORM entities for better-auth",
 	},
 	subCommands: {
-		generate: generateCmd
-	}
+		generate: generateCmd,
+	},
 })
 
 runMain(main)

@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises"
-import type { BetterAuthOptions } from "better-auth"
+import { type BetterAuthOptions, logger } from "better-auth"
 import { Remult } from "remult"
 import { remultAdapter } from "./remult-ba"
 
@@ -24,7 +24,7 @@ export async function generateRemultSchema({ options, file }: { options: BetterA
 		"\n"
 	)
 
-	console.log("Writing remult entities to:", path)
+	logger.info("Writing remult entities to:", path)
 	const content = [overwrite ? pre : `\n${pre}`, code, post].join("\n")
 	await writeFile(path, content, { encoding: "utf-8", flag: overwrite ? "w+" : "a" })
 	return path
