@@ -24,7 +24,7 @@ export async function generateRemultSchema({ options, file }: { options: BetterA
 		"\n"
 	)
 
-	console.log("Writing remult-better-auth entities to:", path)
+	console.log("Writing remult entities to:", path)
 	const content = [overwrite ? pre : `\n${pre}`, code, post].join("\n")
 	await writeFile(path, content, { encoding: "utf-8", flag: overwrite ? "w+" : "a" })
 	return path

@@ -9,9 +9,16 @@
 	"types": "./dist/index.d.ts",
 	"bin": "./dist/cli.mjs",
 	"type": "module",
-	"keywords": ["better-auth", "remult", "orm adapter", "auth adapter"],
+	"keywords": [
+		"better-auth",
+		"remult",
+		"orm adapter",
+		"auth adapter"
+	],
 	"repository": "https://github.com/nerdfolio/remult-better-auth.git",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -40,6 +47,7 @@
 		"remult": "^3.0.4"
 	},
 	"dependencies": {
+		"c12": "^3.0.4",
 		"citty": "^0.1.6"
 	}
 }

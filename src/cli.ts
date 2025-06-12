@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
 import { generateRemultSchema } from "./remult-generate-schema"
 
@@ -18,9 +19,12 @@ const generateCmd = defineCommand({
 			default: "./auth-schema.ts"
 		}
 	},
-	run: async ({ args: { config, output } }) => {
-		console.log("config", config)
-		return generateRemultSchema({ options: {}, file: output })
+	run: async ({ args: { config: configFile, output } }) => {
+		console.log("Loading better-auth options from:", configFile)
+		const { config: { auth: { options } } } = await loadConfig({ configFile })
+
+		console.log("Generating schema based on better-auth options", options)
+		return generateRemultSchema({ options, file: output })
 	}
 })
 
