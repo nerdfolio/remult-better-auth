@@ -1,4 +1,4 @@
-# remult-better-auth
+# @nerdfolio/remult-better-auth
 
 Adapter to use [better-auth](https://www.better-auth.com) with [remult ORM](https://remult.dev)
 
@@ -6,7 +6,7 @@ Adapter to use [better-auth](https://www.better-auth.com) with [remult ORM](http
 
 ```console
 
-pnpm i remult-better-auth
+pnpm i @nerdfolio/remult-better-auth
 
 ```
 
@@ -17,7 +17,7 @@ This package comes with a single-command CLI to generate the relevant `better-au
 
 ```console
 
-pnpm remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
+pnpm @nerdfolio/remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
 
 ```
 
@@ -44,7 +44,7 @@ export const api = remultApi({
 })
 ```
 
-Then use the `getRemult()` method of that api to obtain the remult object and pass that to `remult-better-auth`.
+Then use the `getRemult()` method of that api to obtain the remult object and pass that to `@nerdfolio/remult-better-auth`.
 You'll need to import the entity schema generated above.
 
 ```typescript
