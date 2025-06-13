@@ -11,7 +11,7 @@
 	"type": "module",
 	"keywords": ["better-auth", "remult", "orm adapter", "auth adapter"],
 	"repository": "https://github.com/nerdfolio/remult-better-auth.git",
-	"files": ["dist", "README.md"],
+	"files": ["dist"],
 	"publishConfig": {
 		"access": "public"
 	},
