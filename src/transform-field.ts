@@ -114,7 +114,7 @@ function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["
 	// remult defaultValue is a function so transform if needed
 	return typeof defaultValue === "function"
 		? `${defaultValue.toString().replace(/\/\*.*\*\//, "")}`
-		: typeof defaultValue !== "undefined" ? `${defaultValue}` : undefined
+		: typeof defaultValue !== "undefined" ? `() => ${JSON.stringify(defaultValue)}` : undefined
 }
 
 function transformFieldProps({ required, defaultValue, type, unique, fieldName }: FieldAttribute): string {
