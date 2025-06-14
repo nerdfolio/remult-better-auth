@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 import { existsSync } from "node:fs"
 import { type BetterAuthOptions, logger } from "better-auth"
 import { loadConfig } from "c12"
