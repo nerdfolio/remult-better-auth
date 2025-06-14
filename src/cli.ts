@@ -30,7 +30,11 @@ async function getBetterAuthOptions(configFile?: string) {
 			defaults: { auth: { options: defaultOpts } },
 		})
 
-		return options
+		const { user, account, session, verification } = options
+		return Object.fromEntries(
+			Object.entries({ user, account, session, verification })
+				.filter(([_k, v]) => typeof v !== 'undefined')
+		) satisfies BetterAuthOptions
 	}
 
 	return {
