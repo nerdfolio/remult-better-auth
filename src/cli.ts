@@ -3,6 +3,7 @@ import { existsSync } from "node:fs"
 import { type BetterAuthOptions, logger } from "better-auth"
 import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
+import { version } from "../package.json"
 import { generateRemultSchema } from "./remult-generate-schema"
 import { RemultBetterAuthError } from "./utils"
 
@@ -76,7 +77,7 @@ const generateCmd = defineCommand({
 const main = defineCommand({
 	meta: {
 		name: "remult-better-auth",
-		version: "_",
+		version: version ?? "_",
 		description: "Cli to generate Remult ORM entities for better-auth",
 	},
 	subCommands: {

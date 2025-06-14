@@ -1,6 +1,6 @@
 {
 	"name": "@nerdfolio/remult-better-auth",
-	"version": "0.2.7",
+	"version": "0.2.8",
 	"description": "Remult ORM adapter for better-auth",
 	"license": "ISC",
 	"author": "taivo",
