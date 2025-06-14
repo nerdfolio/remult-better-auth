@@ -1,14 +1,18 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
+import { existsSync } from "node:fs"
 import { type BetterAuthOptions, logger } from "better-auth"
 import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
 import { generateRemultSchema } from "./remult-generate-schema"
-
+import { RemultBetterAuthError } from "./utils"
 
 async function getBetterAuthOptions(configFile?: string) {
 	const defaultOpts = {} as BetterAuthOptions
-
 	async function loadConfigFile(configFile: string) {
+		if (!existsSync(configFile)) {
+			throw new RemultBetterAuthError(`configFile does not exist: ${configFile}`)
+		}
+
 		const {
 			config: {
 				auth: { options },
@@ -23,7 +27,7 @@ async function getBetterAuthOptions(configFile?: string) {
 		}>({
 			configFile,
 			dotenv: true,
-			defaults: { auth: { options: defaultOpts } }
+			defaults: { auth: { options: defaultOpts } },
 		})
 
 		return options
@@ -31,7 +35,7 @@ async function getBetterAuthOptions(configFile?: string) {
 
 	return {
 		source: configFile,
-		options: configFile ? await loadConfigFile(configFile) : defaultOpts
+		options: configFile ? await loadConfigFile(configFile) : defaultOpts,
 	}
 }
 
@@ -44,7 +48,7 @@ const generateCmd = defineCommand({
 		config: {
 			type: "string",
 			description: "Path to better-auth configuration",
-			required: true
+			required: true,
 		},
 		output: {
 			type: "string",
