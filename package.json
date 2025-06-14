@@ -18,7 +18,8 @@
 	"scripts": {
 		"test": "vitest run",
 		"build": "tsup-node",
-		"generate-example": "tsx ./src/cli.ts generate --config ./examples/auth.ts --output ./examples/generated-schema.ts"
+		"generate-example": "tsx ./src/cli.ts generate --config ./examples/auth.ts --output ./examples/generated-schema.ts",
+		"prepare": "pnpm build && pnpm test"
 	},
 	"packageManager": "pnpm@10.12.1+sha256.889bac470ec93ccc3764488a19d6ba8f9c648ad5e50a9a6e4be3768a5de387a3",
 	"engines": {
