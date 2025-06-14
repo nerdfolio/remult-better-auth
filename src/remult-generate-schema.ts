@@ -5,6 +5,7 @@ import { remultAdapter } from "./remult-ba"
 
 export async function generateRemultSchema({ options, file }: { options: BetterAuthOptions; file: string }) {
 	const adapter = remultAdapter(new Remult(), {
+		// for schema generation, we don't need to declare entities.
 		authEntities: {},
 	})(options)
 
