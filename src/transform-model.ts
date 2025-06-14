@@ -7,7 +7,6 @@ type ValueOf<T> = T[keyof T]
 type ModelSchema = ValueOf<BetterAuthDbSchema>
 
 export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthOptions = {}) {
-
 	return trimLines(`
 	import {Entity, Fields, Relations, Validators} from 'remult'
 
@@ -29,7 +28,12 @@ function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useN
 	}
 	`)
 
-	const transformedFields = Object.values(fields).map((f) => transformField(modelName, f))
+	// some custom field definition (such as those in better-auth's additionalFields)
+	// may not have fieldName explicitly defined. When that is the case, we ensure there
+	// is a fieldName by using the field key.
+	const transformedFields = Object.entries(fields)
+		.map(([fieldName, attrs]) => ({ fieldName, ...attrs })) // ensure there is a fieldName
+		.map((f) => transformField(modelName, f))
 	const allFields = [remultIdField({ useNumberId })].concat(transformedFields)
 
 	return entity.replace("{{FIELDS}}", trimLines(allFields.join("\n\n"), true))
