@@ -1,5 +1,5 @@
 import type { FieldAttribute, FieldType } from "better-auth/db"
-import { modelNameToClassName } from "./utils"
+import { RemultBetterAuthError, modelNameToClassName } from "./utils"
 
 export function remultIdField({ name = "id", useNumberId = false }: { name?: string; useNumberId?: boolean }) {
 	if (useNumberId) {
@@ -23,6 +23,10 @@ export function transformField<T extends FieldType>(modelName: string, {
 	references,
 	defaultValue
 }: FieldAttribute<T>) {
+
+	if (!fieldName || !type) {
+		throw new RemultBetterAuthError(`Encountered field definition without "fieldName" or "type". Please check config for model: ${modelName}`)
+	}
 
 	const transformedProps = transformFieldProps({ required, defaultValue, type, unique, fieldName })
 
