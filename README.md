@@ -17,7 +17,7 @@ This package comes with a single-command CLI to generate the relevant `better-au
 
 ```console
 
-pnpm @nerdfolio/remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
+pnpm remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
 
 ```
 
