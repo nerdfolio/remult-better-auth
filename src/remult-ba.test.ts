@@ -3,7 +3,7 @@ import path from "node:path"
 import { createClient } from "@libsql/client"
 import type { BetterAuthOptions } from "better-auth"
 import { runAdapterTest } from "better-auth/adapters/test"
-import { type ClassType, InMemoryDataProvider, Remult, SqlDatabase } from "remult"
+import { type ClassType, type DataProvider, InMemoryDataProvider, Remult, SqlDatabase } from "remult"
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -18,8 +18,6 @@ const TEST_OPTIONS: BetterAuthOptions = {
 	},
 }
 
-type TestDatabaseProvider = JsonFileDataProvider | SqlDatabase | InMemoryDataProvider
-
 describe("remult-better-auth", async () => {
 	const testDir = path.join("./zztemp", "remult-better-auth-test")
 	//
@@ -29,7 +27,6 @@ describe("remult-better-auth", async () => {
 		rmSync(testDir, { recursive: true })
 	}
 	mkdirSync(testDir, { recursive: true })
-
 
 	const schemaFile = await generateRemultSchema({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
 	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
@@ -43,10 +40,10 @@ describe("remult-better-auth", async () => {
 	describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
 })
 
-async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: TestDatabaseProvider) {
+async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: DataProvider) {
 	const remult = new Remult(dbProvider)
 
-	const adapterFn = remultAdapter(remult, {
+	const adapterFn = remultAdapter(remult.dataProvider, {
 		authEntities,
 		debugLogs: {
 			// If your adapter config allows passing in debug logs, then pass this here.
@@ -90,7 +87,7 @@ async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbPro
 	})
 }
 
-function initDatabaseProvider(type: "json" | "sqlite" | "memory", testDir: string): TestDatabaseProvider {
+function initDatabaseProvider(type: "json" | "sqlite" | "memory", testDir: string): DataProvider {
 	switch (type) {
 		case "json":
 			return new JsonFileDataProvider(testDir)

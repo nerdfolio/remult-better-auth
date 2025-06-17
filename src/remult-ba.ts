@@ -1,5 +1,5 @@
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type ErrorInfo, type Remult, SqlDatabase } from "remult"
+import { type ClassType, type DataProvider, type ErrorInfo, Remult, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
@@ -13,7 +13,45 @@ export interface RemultAdapterOptions {
 	debugLogs?: AdapterDebugLogs
 }
 
-export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) {
+
+/**
+ * Create a BetterAuth adapter for Remult.
+ *
+ * @param remultDataProvider - instance of Remult DataProvider
+ * @param adapterCfg - configuration for the adapter
+ * @returns a BetterAuth adapter
+ *
+ * @example
+ * import { remultAdapter } from "@nerdfolio/remult-better-auth"
+ * import { createClient } from "@libsql/client"
+ * import { Remult } from "remult"
+ * import { type BetterAuthOptions } from "better-auth"
+ * import { User, Account, Session, Verification } from "./auth-schema"
+ *
+ * const remultDataProvider = new JsonFileDataProvider("./db")
+ *
+ * const remultApi = // create your remult api
+ *
+ * // then use (await remultApi.getRemult().dataProvider) or a shared dataProvider instance.
+ * // Using a shared dataProvider instance helps resolve circular dependencies at compile time
+ * // should you decide to define remult's getUser() using auth.
+ * //
+ * const auth = betterAuth({
+ *   database: remultAdapter(remultDataProvider, {authEntities: {User, Account, Session, Verification}}),
+ *   ...otherBetterAuthOptions
+ * })
+ */
+export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapterCfg: RemultAdapterOptions) {
+	// NOTE: data provider can be obtained by calling (await remultApi.getRemult()).dataProvider
+	// or by using a common dataProvider instance that is used both for remult initialization and
+	// remult-better-auth adapter initialization.
+	// The 2nd option is useful to avoid compile-time circular dependency when defining remult's
+	// getUser() using better-auth.
+	//
+
+	// NOTE: keep the instance check for backward compat ... should remove eventually and just use DataProvider
+	const remult = remultOrDataProvider instanceof Remult ? remultOrDataProvider : new Remult(remultOrDataProvider)
+
 	const authRepos = Object.fromEntries(
 		Object.values(adapterCfg.authEntities)
 			.map((entityClass) => remult.repo(entityClass))
@@ -129,9 +167,9 @@ export function remultAdapter(remult: Remult, adapterCfg: RemultAdapterOptions) 
 						)
 					}
 
-					return getRepo(model).update(
-						where[0].value as string | number, values as Record<string, unknown>
-					) as Promise<typeof values>
+					return getRepo(model).update(where[0].value as string | number, values as Record<string, unknown>) as Promise<
+						typeof values
+					>
 				},
 				async updateMany({ model, where, update: values }) {
 					return getRepo(model).updateMany({

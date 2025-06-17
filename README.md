@@ -35,26 +35,49 @@ Follow the Remult setup to define the api for your particular web framework. For
 like
 
 ```typescript
-// src/api.ts
+// src/remult-data-provider.ts
+
+export const remultDataProvider = new JsonFileDataProvider("./db")
+```
+
+```typescript
+// src/remult-api.ts
+
+import { remultDataProvider } from "./remult-data-provider"
+import { auth } from "./auth"
 
 export const api = remultApi({
 	entities: [...],
-	getUser,
+	dataProvider: remultDataProvider,
+	async getUser({request}) {
+		const s = await auth.api.getSession({ headers: request.headers })
+
+		if (!s) {
+			throw new BetterAuthError("getUserInfo: No session found in request.", JSON.stringify(request))
+		}
+
+		const { id = "", name = "" } = s ? s.user : {}
+		const roles = "role" in s.user ? (s.user.role as string).split(",").map((r) => r.trim()) : [] satisfies string[]
+
+		return { id, name, roles } satisfies UserInfo
+	},
 	...
 })
 ```
 
-Then use the `getRemult()` method of that api to obtain the remult object and pass that to `@nerdfolio/remult-better-auth`.
-You'll need to import the entity schema generated above.
+Then pass the same dataProvider instance to  `@nerdfolio/remult-better-auth`. It's preferable to use the shared
+dataProvider instance. Alternatively, you can also use `(await api.getRemult()).dataProvider` but `getUser()` is defined
+using `auth` then you'll have an annoying compile-time circular dependency.
 
 ```typescript
 import { betterAuth } from "better-auth"
 import { api } from "~/api"
-import {User, Account, Session, Verification} from "./src/auth-schema"
+import { User, Account, Session, Verification } from "./src/auth-schema" // generated via the cli
+import { remultDataProvider } from "./remult-data-provider"
 
 
 return betterAuth({
-	database: remultAdapter(await api.getRemult(), { authEntities: {User, Account, Session, Verification}}),
+	database: remultAdapter(remultDataProvider, { authEntities: {User, Account, Session, Verification}}),
 	...anyOtherBetterAuthOptions
 })
 ```
