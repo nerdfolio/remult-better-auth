@@ -1,5 +1,5 @@
-import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type DataProvider, type ErrorInfo, Remult, SqlDatabase } from "remult"
+import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
+import { type ClassType, type DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
@@ -24,6 +24,8 @@ export interface RemultAdapterOptions {
 export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapterCfg: RemultAdapterOptions) {
 	const remult = remultOrDataProvider instanceof Remult ? remultOrDataProvider : new Remult(remultOrDataProvider)
 
+	type IdType = string | number
+
 	const authRepos = Object.fromEntries(
 		Object.values(adapterCfg.authEntities)
 			.map((entityClass) => remult.repo(entityClass))
@@ -38,6 +40,11 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 			)
 		}
 		return repo
+	}
+
+	async function findIdWhere(modelRepo: Repository<unknown>, where: CleanedWhere[]) {
+		const { id } = ((await modelRepo.findOne({ where: transformWhereClause(where) })) as { id?: IdType }) ?? {}
+		return id
 	}
 
 	return createAdapter({
@@ -132,16 +139,27 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 				async update({ model, where, update: values }) {
 					//
 					// Sanity check. Shouldn't happen
-					//
-					if (where.length > 1 || where[0].field !== "id") {
-						throw new Error(
-							`adapter::update() only supports 1 where clause with id field. Given where clause: ${JSON.stringify(where)}`
+					//)
+					if (where.length > 1) {
+						throw new RemultBetterAuthError(
+							`adapter::update() only supports 1 where clause. Given where clause: ${JSON.stringify(where)}`
 						)
 					}
 
-					return getRepo(model).update(where[0].value as string | number, values as Record<string, unknown>) as Promise<
-						typeof values
-					>
+					const modelRepo = getRepo(model)
+
+					//
+					// When where isn't conditioned on "id", it's most likely a session update conditioned on "token".
+					// We have to get an id first because remult needs the id for update to return the updated object.
+					// updateMany() doesn't work for this case because it returns the number of rows updated
+					//
+					const modelId = where[0].field === "id" ? (where[0].value as IdType) : await findIdWhere(modelRepo, where)
+
+					if (!modelId) {
+						throw new RemultBetterAuthError(`adapter::update() couldn't find "${model}" where ${JSON.stringify(where)}`)
+					}
+
+					return modelRepo.update(modelId, values as Record<string, unknown>) as Promise<typeof values>
 				},
 				async updateMany({ model, where, update: values }) {
 					return getRepo(model).updateMany({
@@ -153,14 +171,26 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 					//
 					// Sanity check. Shouldn't happen
 					//
-					if (where.length > 1 || where[0].field !== "id") {
-						throw new Error(
-							`adapter::update() only supports 1 where clause with id field. Given where clause: ${JSON.stringify(where)}`
+					if (where.length > 1) {
+						throw new RemultBetterAuthError(
+							`adapter::delete() only supports 1 where. Given where clause: ${JSON.stringify(where)}`
 						)
 					}
 
+					//
+					// When where isn't conditioned on "id", it's most likely a session update conditioned on "token".
+					// We have to get an id first because remult needs the id for update to return the updated object.
+					// deleteMany() doesn't work for this case because it returns the number of rows updated
+					//
+					const modelRepo = getRepo(model)
+					const modelId = where[0].field === "id" ? (where[0].value as IdType) : await findIdWhere(modelRepo, where)
+
+					if (!modelId) {
+						throw new RemultBetterAuthError(`adapter::delete() couldn't find "${model}" where ${JSON.stringify(where)}`)
+					}
+
 					try {
-						await getRepo(model).delete(where[0].value as string | number)
+						await getRepo(model).delete(modelId)
 					} catch (e: unknown) {
 						// NOTE: remult doesn't have explicit error class or error code so we gotta do this manually
 						const { message, httpStatusCode } = e as ErrorInfo
