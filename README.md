@@ -24,7 +24,7 @@ pnpm remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
 `--config` is required. It refers to the auth.ts setup file for your project.
 If `--output` is not provided, the default value is `./auth-schema.ts`.
 
-You may notice that this mimicks `@better-auth/cli`. Our custom cli is necessary because (as of June 2025), @better-auth/cli
+You may notice that this mimicks `@better-auth/cli`. Our custom cli is necessary because (as of June 12, 2025), @better-auth/cli
 does not use the `createSchema` function from custom adapters. It only supports built-in generators for kysely, drizzle, and prisma.
 
 Here is [a generated schema example](examples/generated-schema.ts)
@@ -72,7 +72,7 @@ return betterAuth({
 })
 ```
 
-Note: if you define `getUser` using `auth` as above and are annoyed with the compile-time dependency between api.ts and auth.ts,
+Note: if you define `getUser` using `auth` as above and are annoyed with the compile-time circular dependency between api.ts and auth.ts,
 you can define the dataProvider in a separate file and use it separately to define api and auth.
 
 For the scripting scenario, you'll just need to ass the dataProvider.
