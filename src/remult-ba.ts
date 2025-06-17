@@ -1,4 +1,3 @@
-import type { AdapterInstance } from "better-auth"
 import { type AdapterDebugLogs, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import { type ClassType, type DataProvider, type ErrorInfo, Remult, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
@@ -22,9 +21,6 @@ export interface RemultAdapterOptions {
  * @returns a BetterAuth adapter creating function, e.g. (options: BetterAuthOptions) => Adapter
  *
  */
-
-export function remultAdapter(remultOrDataProvider: DataProvider, adapterCfg: RemultAdapterOptions): AdapterInstance
-export function remultAdapter(remultOrDataProvider: Remult, adapterCfg: RemultAdapterOptions): AdapterInstance
 export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapterCfg: RemultAdapterOptions) {
 	const remult = remultOrDataProvider instanceof Remult ? remultOrDataProvider : new Remult(remultOrDataProvider)
 
