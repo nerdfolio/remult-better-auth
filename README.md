@@ -43,14 +43,21 @@ export const api = remultApi({
 	entities: [...],
 	dataProvider: ...,
 	async getUser({request}) {
-		const s = await auth.api.getSession({ headers: request.headers })
+		const s = await auth.api.getSession({
+			headers: request.headers
+		})
 
 		if (!s) {
-			throw new BetterAuthError("getUserInfo: No session found in request.", JSON.stringify(request))
+			throw new BetterAuthError(
+				"getUserInfo: No session found in request.",
+				JSON.stringify(request)
+			)
 		}
 
 		const { id = "", name = "" } = s ? s.user : {}
-		const roles = "role" in s.user ? (s.user.role as string).split(",").map((r) => r.trim()) : [] satisfies string[]
+		const roles = "role" in s.user
+			? (s.user.role as string).split(",").map((r) => r.trim())
+			: []satisfies string[]
 
 		return { id, name, roles } satisfies UserInfo
 	},
@@ -67,7 +74,9 @@ import { api } from "~/api"
 import { User, Account, Session, Verification } from "./src/auth-schema" // generated via the cli
 
 return betterAuth({
-	database: remultAdapter(await api.getRemult(), { authEntities: {User, Account, Session, Verification}}),
+	database: remultAdapter(await api.getRemult(), {
+		authEntities: {User, Account, Session, Verification}
+	}),
 	...anyOtherBetterAuthOptions
 })
 ```
