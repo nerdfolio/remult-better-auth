@@ -35,20 +35,13 @@ Follow the Remult setup to define the api for your particular web framework. For
 like
 
 ```typescript
-// src/remult-data-provider.ts
+// src/api.ts
 
-export const remultDataProvider = new JsonFileDataProvider("./db")
-```
-
-```typescript
-// src/remult-api.ts
-
-import { remultDataProvider } from "./remult-data-provider"
 import { auth } from "./auth"
 
 export const api = remultApi({
 	entities: [...],
-	dataProvider: remultDataProvider,
+	dataProvider: ...,
 	async getUser({request}) {
 		const s = await auth.api.getSession({ headers: request.headers })
 
@@ -65,23 +58,21 @@ export const api = remultApi({
 })
 ```
 
-Then pass the same dataProvider instance to  `@nerdfolio/remult-better-auth`. It's preferable to use the shared
-dataProvider instance. Alternatively, you can also use `(await api.getRemult()).dataProvider` but `getUser()` is defined
-using `auth` then you'll have an annoying compile-time circular dependency.
+Then pass either the remult instance or its dataProvider to `@nerdfolio/remult-better-auth`. They can be obtained
+via `await api.getRemult()` or `(await api.getRemult()).dataProvider`.
 
 ```typescript
 import { betterAuth } from "better-auth"
 import { api } from "~/api"
 import { User, Account, Session, Verification } from "./src/auth-schema" // generated via the cli
-import { remultDataProvider } from "./remult-data-provider"
-
 
 return betterAuth({
-	database: remultAdapter(remultDataProvider, { authEntities: {User, Account, Session, Verification}}),
+	database: remultAdapter(await api.getRemult(), { authEntities: {User, Account, Session, Verification}}),
 	...anyOtherBetterAuthOptions
 })
 ```
 
-The alternative to using `api.getRemult()` is instantiating your own `new Remult(...)` instance and setup appropriate
-data providers so that the adapter can map better-auth requests to the appropriate entity repositories. You'll probably choose
-this for the scripting scenario outside of web frameworks.
+Note: if you define `getUser` using `auth` as above and are annoyed with the compile-time dependency between api.ts and auth.ts,
+you can define the dataProvider in a separate file and use it separately to define api and auth.
+
+For the scripting scenario, you'll just need to ass the dataProvider.
