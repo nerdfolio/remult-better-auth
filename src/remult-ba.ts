@@ -1,3 +1,4 @@
+import { isPromise } from "node:util/types"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import { type ClassType, type DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
@@ -21,18 +22,25 @@ export interface RemultAdapterOptions {
  * @returns a BetterAuth adapter creating function, e.g. (options: BetterAuthOptions) => Adapter
  *
  */
-export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapterCfg: RemultAdapterOptions) {
-	const remult = remultOrDataProvider instanceof Remult ? remultOrDataProvider : new Remult(remultOrDataProvider)
+export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Promise<Remult | DataProvider>, adapterCfg: RemultAdapterOptions) {
 
 	type IdType = string | number
+	let remult: Remult
+	let authRepos: Record<string, Repository<unknown>>
 
-	const authRepos = Object.fromEntries(
-		Object.values(adapterCfg.authEntities)
-			.map((entityClass) => remult.repo(entityClass))
-			.map((repo) => [repo.metadata.key, repo])
-	)
+	async function getRepo(modelName: string) {
+		if (!remult) {
+			const resolved = isPromise(remultOrDataProvider) ? await remultOrDataProvider : remultOrDataProvider
+			remult = resolved instanceof Remult ? resolved : new Remult(resolved)
+		}
 
-	function getRepo(modelName: string) {
+		if (!authRepos) {
+			authRepos = Object.fromEntries(
+				Object.values(adapterCfg.authEntities)
+					.map((entityClass) => remult.repo(entityClass))
+					.map((repo) => [repo.metadata.key, repo])
+			)
+		}
 		const repo = authRepos[modelName]
 		if (!repo) {
 			throw new RemultBetterAuthError(
@@ -67,15 +75,15 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 				async create({ model, data }) {
 					// NOTE: better-auth already generates an id for us. It's in data.
 					// NOTE: for some reason, remult doesn't persist on "save" but does on "insert"
-					return getRepo(model).insert(data) as Promise<typeof data>
+					return getRepo(model).then(repo => repo.insert(data) as Promise<typeof data>)
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
-					return getRepo(model).findOne({
+					return getRepo(model).then(repo => repo.findOne({
 						where: transformWhereClause(where),
-					}) as Promise<T>
+					}) as Promise<T>)
 				},
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
-					const modelRepo = getRepo(model)
+					const modelRepo = await getRepo(model)
 					const transformedWhere = where ? transformWhereClause(where) : undefined
 					const orderBy = sortBy ? { [sortBy.field]: sortBy.direction } : undefined
 
@@ -134,7 +142,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 					return result.rows satisfies T[]
 				},
 				async count({ model, where }) {
-					return getRepo(model).count(transformWhereClause(where))
+					return getRepo(model).then(repo => repo.count(transformWhereClause(where)))
 				},
 				async update({ model, where, update: values }) {
 					//
@@ -146,7 +154,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 						)
 					}
 
-					const modelRepo = getRepo(model)
+					const modelRepo = await getRepo(model)
 
 					//
 					// When where isn't conditioned on "id", it's most likely a session update conditioned on "token".
@@ -162,10 +170,10 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 					return modelRepo.update(modelId, values as Record<string, unknown>) as Promise<typeof values>
 				},
 				async updateMany({ model, where, update: values }) {
-					return getRepo(model).updateMany({
+					return getRepo(model).then(repo => repo.updateMany({
 						where: transformWhereClause(where),
 						set: values as Record<string, unknown>,
-					})
+					}))
 				},
 				async delete({ model, where }) {
 					//
@@ -182,7 +190,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 					// We have to get an id first because remult needs the id for update to return the updated object.
 					// deleteMany() doesn't work for this case because it returns the number of rows updated
 					//
-					const modelRepo = getRepo(model)
+					const modelRepo = await getRepo(model)
 					const modelId = where[0].field === "id" ? (where[0].value as IdType) : await findIdWhere(modelRepo, where)
 
 					if (!modelId) {
@@ -190,7 +198,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 					}
 
 					try {
-						await getRepo(model).delete(modelId)
+						await modelRepo.delete(modelId)
 					} catch (e: unknown) {
 						// NOTE: remult doesn't have explicit error class or error code so we gotta do this manually
 						const { message, httpStatusCode } = e as ErrorInfo
@@ -202,7 +210,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult, adapt
 					}
 				},
 				async deleteMany({ model, where }) {
-					return getRepo(model).deleteMany({ where: transformWhereClause(where) })
+					return getRepo(model).then(repo => repo.deleteMany({ where: transformWhereClause(where) }))
 				},
 				options: adapterCfg,
 			}
