@@ -1,8 +1,5 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"files": {
-		"ignore": ["_wip", "drizzle/migrations"]
-	},
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -13,9 +10,6 @@
 		"enabled": true,
 		"lineWidth": 120
 	},
-	"organizeImports": {
-		"enabled": true
-	},
 	"linter": {
 		"enabled": true,
 		"rules": {
@@ -25,7 +19,9 @@
 				//"noConsole": "warn"
 			},
 			"style": {
-				"recommended": true
+				"recommended": true,
+				"noProcessEnv": "error",
+				"useConsistentMemberAccessibility": "off"
 			},
 			"complexity": {
 				"recommended": true
@@ -49,9 +45,7 @@
 				"useValidAnchor": "off"
 			},
 			"nursery": {
-				"recommended": true,
-				"noProcessEnv": "error",
-				"useConsistentMemberAccessibility": "off"
+				"recommended": true
 			}
 		}
 	},

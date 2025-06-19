@@ -9,9 +9,16 @@
 	"types": "./dist/index.d.ts",
 	"bin": "./dist/cli.mjs",
 	"type": "module",
-	"keywords": ["better-auth", "remult", "orm adapter", "auth adapter"],
+	"keywords": [
+		"better-auth",
+		"remult",
+		"orm adapter",
+		"auth adapter"
+	],
 	"repository": "https://github.com/nerdfolio/remult-better-auth.git",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"publishConfig": {
 		"access": "public"
 	},
@@ -27,14 +34,14 @@
 		"pnpm": ">=10"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
+		"@biomejs/biome": "^2.0.0",
 		"@libsql/client": "^0.15.9",
 		"@types/node": "^24.0.3",
 		"better-auth": "^1.2.9",
 		"remult": "^3.0.5",
 		"tsup": "^8.5.0",
 		"tsx": "^4.20.3",
-		"vitest": "^3.2.3"
+		"vitest": "^3.2.4"
 	},
 	"peerDependencies": {
 		"better-auth": "^1.2.8",
