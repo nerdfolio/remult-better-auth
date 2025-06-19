@@ -65,8 +65,8 @@ export const api = remultApi({
 })
 ```
 
-Then pass either the remult instance or its dataProvider to `@nerdfolio/remult-better-auth`. They can be obtained
-via `await api.getRemult()` or `(await api.getRemult()).dataProvider`.
+Then pass the remult instance or its dataProvider or a promise to either to `@nerdfolio/remult-better-auth`. These values can be obtained
+via `api.getRemult()` or `(await api.getRemult()).dataProvider`.
 
 ```typescript
 import { betterAuth } from "better-auth"
@@ -74,7 +74,7 @@ import { api } from "~/api"
 import { User, Account, Session, Verification } from "./src/auth-schema" // generated via the cli
 
 return betterAuth({
-	database: remultAdapter(await api.getRemult(), {
+	database: remultAdapter(api.getRemult(), {
 		authEntities: {User, Account, Session, Verification}
 	}),
 	...anyOtherBetterAuthOptions
