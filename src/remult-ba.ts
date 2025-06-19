@@ -31,7 +31,11 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 	async function getRepo(modelName: string) {
 		if (!remult) {
 			const resolved = isPromise(remultOrDataProvider) ? await remultOrDataProvider : remultOrDataProvider
-			remult = resolved instanceof Remult ? resolved : new Remult(resolved)
+			// remult = resolved instanceof Remult ? resolved : new Remult(resolved)
+			// NOTE: the instanceof check above is not reliable. When esm code is mixed with cjs during bundling
+			// that check returns false even though resolved was obtained via api.getRemult() thus is a Remult instance.
+			// We work around it with check for the dataProvider member
+			remult = 'dataProvider' in resolved ? resolved : new Remult(resolved)
 		}
 
 		if (!authRepos) {
