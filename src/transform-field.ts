@@ -78,8 +78,9 @@ export function transformField<T extends FieldType>(
 	// append relation definition
 	//
 	if (references) {
-		if (references.model !== "user") {
-			throw new Error(`Unknown references: ${JSON.stringify(references)}`)
+		if (references.field !== "id") {
+			// Just throw for now as we figure out if this is actually ok
+			throw new RemultBetterAuthError(`Model ${modelName} references a non-id field: ${JSON.stringify(references)}`)
 		}
 
 		const fromClass = modelNameToClassName(modelName)
