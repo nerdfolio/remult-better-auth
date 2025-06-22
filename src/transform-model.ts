@@ -32,7 +32,7 @@ function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useN
 	// may not have fieldName explicitly defined. When that is the case, we ensure there
 	// is a fieldName by using the field key.
 	const transformedFields = Object.entries(fields)
-		.map(([fieldName, attrs]) => ({ fieldName, ...attrs })) // ensure there is a fieldName
+		.map(([key, { fieldName, ...attrs }]) => ({ fieldName: fieldName ?? key, ...attrs })) // ensure there is a fieldName (some plugins don't define fully)
 		.map((f) => transformField(modelName, f))
 	const allFields = [remultIdField({ useNumberId })].concat(transformedFields)
 

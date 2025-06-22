@@ -25,6 +25,8 @@ export function transformWhereClause(where: CleanedWhere[] = []) {
 			console.warn("Where with op only", w)
 			return transformWhereOp(w)
 		}
+
+		throw new RemultBetterAuthError(`Unimplemented scenario for where clause: ${JSON.stringify(w)}`)
 	})
 
 	return Object.fromEntries(entries as [string, unknown][])

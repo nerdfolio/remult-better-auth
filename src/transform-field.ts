@@ -1,5 +1,5 @@
 import type { FieldAttribute, FieldType } from "better-auth/db"
-import { RemultBetterAuthError, modelNameToClassName } from "./utils"
+import { modelNameToClassName, RemultBetterAuthError } from "./utils"
 
 export function remultIdField({ name = "id", useNumberId = false }: { name?: string; useNumberId?: boolean }) {
 	if (useNumberId) {
@@ -15,17 +15,14 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 		${name}! : string`.trim()
 }
 
-export function transformField<T extends FieldType>(modelName: string, {
-	fieldName = "",
-	type,
-	required,
-	unique,
-	references,
-	defaultValue
-}: FieldAttribute<T>) {
-
+export function transformField<T extends FieldType>(
+	modelName: string,
+	{ fieldName = "", type, required, unique, references, defaultValue }: FieldAttribute<T>
+) {
 	if (!fieldName || !type) {
-		throw new RemultBetterAuthError(`Encountered field definition without "fieldName" or "type". Please check config for model: ${modelName}`)
+		throw new RemultBetterAuthError(
+			`Encountered field definition without "fieldName" or "type". Please model: ${modelName}`
+		)
 	}
 
 	const transformedProps = transformFieldProps({ required, defaultValue, type, unique, fieldName })
@@ -96,16 +93,18 @@ export function transformField<T extends FieldType>(modelName: string, {
 	return field.trim()
 }
 
-function transformNullable({ type, fieldName }: { type: FieldType, fieldName?: string }) {
-	if ((type === "string" && fieldName === "email")
-		|| (type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? ""))
-		|| (type === "boolean")
-	) return false
+function transformNullable({ type, fieldName }: { type: FieldType; fieldName?: string }) {
+	if (
+		(type === "string" && fieldName === "email") ||
+		(type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "")) ||
+		type === "boolean"
+	)
+		return false
 
 	return undefined
 }
 
-function transformValidators({ type, unique, fieldName }: { type: FieldType, unique?: boolean, fieldName?: string }) {
+function transformValidators({ type, unique, fieldName }: { type: FieldType; unique?: boolean; fieldName?: string }) {
 	const v = [
 		unique ? "Validators.unique()" : undefined,
 		type === "string" && fieldName === "email" ? "Validators.email()" : undefined,
@@ -118,7 +117,9 @@ function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["
 	// remult defaultValue is a function so transform if needed
 	return typeof defaultValue === "function"
 		? `${defaultValue.toString().replace(/\/\*.*\*\//, "")}`
-		: typeof defaultValue !== "undefined" ? `() => ${JSON.stringify(defaultValue)}` : undefined
+		: typeof defaultValue !== "undefined"
+			? `() => ${JSON.stringify(defaultValue)}`
+			: undefined
 }
 
 function transformFieldProps({ required, defaultValue, type, unique, fieldName }: FieldAttribute): string {
@@ -131,7 +132,8 @@ function transformFieldProps({ required, defaultValue, type, unique, fieldName }
 		//
 		// NOTE: dbReadOnly doesn't seem to work as expected
 		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
-	}).filter(([_k, v]) => typeof v !== 'undefined')
+	})
+		.filter(([_k, v]) => typeof v !== "undefined")
 		.map(([k, v]) => `${k}: ${v}`)
 
 	return props.length > 0 ? `{${props.join(", ")}}` : ""
