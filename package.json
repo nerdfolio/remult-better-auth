@@ -3,7 +3,7 @@
 	"version": "0.2.17",
 	"description": "Remult ORM adapter for better-auth",
 	"license": "ISC",
-	"author": "taivo",
+	"author": "taivo@github",
 	"main": "./dist/index.cjs",
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.ts",
