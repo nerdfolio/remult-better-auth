@@ -12,7 +12,23 @@ pnpm i @nerdfolio/remult-better-auth
 
 ## Generate Schema
 
-This package comes with a single-command CLI to generate the relevant `better-auth` schema as `remult` entities:
+### With @better-auth/cli
+
+Now that [better-auth PR3006](https://github.com/better-auth/better-auth/pull/3006) has been merged (v1.2.9 onward), you can use the @better-auth/cli as described by the better-auth team
+
+```console
+
+pnpx @better-auth/cli@latest generate
+
+```
+
+See `pnpx @better-auth/cli help` for more advanced usage hints.
+
+Here is [a generated schema example](examples/generated-schema.ts)
+
+### With this adapter's cli
+
+This adapter comes with a single-command CLI to generate the relevant `better-auth` schema as `remult` entities:
 `User, Account, Session, Verification`. After the installation, run:
 
 ```console
@@ -24,8 +40,7 @@ pnpm remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
 `--config` is required. It refers to the auth.ts setup file for your project.
 If `--output` is not provided, the default value is `./auth-schema.ts`.
 
-You may notice that this mimicks `@better-auth/cli`. Our custom cli is necessary because (as of June 12, 2025), @better-auth/cli
-does not use the `createSchema` function from custom adapters. It only supports built-in generators for kysely, drizzle, and prisma.
+You may notice that this mimicks `@better-auth/cli`. Prior to [better-auth PR3006](https://github.com/better-auth/better-auth/pull/3006), the @better-auth/cli does not use the `createSchema` function from custom adapters. It only supported built-in generators for kysely, drizzle, and prisma.
 
 Here is [a generated schema example](examples/generated-schema.ts)
 
