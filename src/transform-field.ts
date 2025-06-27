@@ -36,17 +36,17 @@ export function transformField<T extends FieldType>(
 			break
 		case "string[]":
 			field = `@Fields.json(${transformedProps})
-			${fieldName} : string[] = []
+			${fieldName}: string[] = []
 			`
 			break
 		case "number":
 			field = `@Fields.integer(${transformedProps})
-			${fieldName} : number
+			${fieldName}?: number
 			`
 			break
 		case "number[]":
 			field = `@Fields.json(${transformedProps})
-			${fieldName} : number[] = []
+			${fieldName}: number[] = []
 			`
 			break
 
@@ -57,12 +57,12 @@ export function transformField<T extends FieldType>(
 			break
 		case "date":
 			if (fieldName === "createdAt") {
-				field = `@Fields.createdAt(${transformedProps})
-				${fieldName}! : Date
+				field = `@Fields.createdAt()
+				${fieldName} = new Date()
 				`
 			} else if (fieldName === "updatedAt") {
-				field = `@Fields.updatedAt(${transformedProps})
-				${fieldName}! : Date
+				field = `@Fields.updatedAt()
+				${fieldName} = new Date()
 				`
 			} else {
 				field = `@Fields.date(${transformedProps})
@@ -128,7 +128,6 @@ function transformFieldProps({ required, defaultValue, type, unique, fieldName }
 		required,
 		allowNull: transformNullable({ type, fieldName }),
 		includeInApi: fieldName === "email" ? "Role_Auth.Role_Auth__Admin" : undefined,
-		// allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
 		validate: transformValidators({ type, unique, fieldName }),
 		defaultValue: transformDefaultVal({ defaultValue }),
 		// NOTE: dbReadOnly doesn't seem to work as expected
