@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises"
+import { writeFile } from "./utils"
 import { type BetterAuthOptions, logger } from "better-auth"
 import { Remult } from "remult"
 import { remultAdapter } from "./remult-ba"
@@ -29,7 +29,8 @@ export async function generateRemultSchema({ options, file }: { options: BetterA
 
 	logger.info("Writing remult entities to:", path)
 	const content = [overwrite ? pre : `\n${pre}`, code, post].join("\n")
-	await writeFile(path, content, { encoding: "utf-8", flag: overwrite ? "w+" : "a" })
+	await writeFile(path, content, { overwrite })
+
 	return path
 }
 
@@ -60,7 +61,7 @@ export const auth = ()=>{
 		}
   })
 }`
-	await writeFile(moduleServerIndex, contentServerIndex, { encoding: "utf-8" })
+	await writeFile(moduleServerIndex, contentServerIndex)
 
 	const moduleServerConfig = join(modulePath, "server/better-auth-config.ts")
 	const contentServerConfig = `import { remultAdapter } from "@nerdfolio/remult-better-auth";
@@ -73,7 +74,7 @@ export const auth = betterAuth({
     authEntities,
   }),
 });`
-	await writeFile(moduleServerConfig, contentServerConfig, { encoding: "utf-8", flag: "w+" })
+	await writeFile(moduleServerConfig, contentServerConfig, { overwrite: true })
 
 	const moduleServerHandle = join(modulePath, "server/handle.ts")
 	const contentServerHandle = `// Example of integration with svelte-kit. See https://www.better-auth.com/docs/integrations/svelte-kit
@@ -85,5 +86,5 @@ import type { Handle } from "@sveltejs/kit";
 export const handleAuth: Handle = async ({ event, resolve }) => {
   return svelteKitHandler({ event, resolve, auth });
 };`
-	await writeFile(moduleServerHandle, contentServerHandle, { encoding: "utf-8" })
+	await writeFile(moduleServerHandle, contentServerHandle)
 }

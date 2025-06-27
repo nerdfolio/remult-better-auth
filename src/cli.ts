@@ -5,8 +5,7 @@ import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
 import { version } from "../package.json"
 import { generateRemultModule, generateRemultSchema } from "./remult-generate-schema"
-import { RemultBetterAuthError } from "./utils"
-import { writeFile } from "node:fs/promises"
+import { writeFile } from "./utils"
 
 async function getBetterAuthOptions(configFile?: string) {
 	const defaultOpts = {	} as BetterAuthOptions
@@ -21,13 +20,7 @@ import { memoryAdapter } from "better-auth/adapters/memory"
 export const auth = betterAuth({
 	database: memoryAdapter({}) //just to make better-auth happy. Not needed for schema gen
 })`
-			// Ensure all directories exist before writing the file
-			await import("node:fs/promises").then(async fs => {
-				const idx = configFile.lastIndexOf("/")
-				const dir = idx !== -1 ? configFile.slice(0, idx) : "."
-				await fs.mkdir(dir, { recursive: true })
-				await fs.writeFile(configFile, content, { encoding: "utf-8" })
-			})
+			await writeFile(configFile, content)
 		}
 
 		const {
