@@ -1,13 +1,13 @@
 {
 	"name": "@nerdfolio/remult-better-auth",
-	"version": "0.2.18",
+	"version": "0.2.19",
 	"description": "Remult adapter for better-auth",
 	"license": "ISC",
 	"author": "taivo@github",
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.mjs",
-	"types": "./dist/index.d.ts",
 	"bin": "./dist/cli.mjs",
+	"exports": {
+		".": "./src/index.ts"
+	},
 	"type": "module",
 	"keywords": [
 		"better-auth",
@@ -20,7 +20,14 @@
 		"dist"
 	],
 	"publishConfig": {
-		"access": "public"
+		"access": "public",
+		"exports": {
+			".": {
+				"types": "./dist/index.d.ts",
+				"require": "./dist/index.cjs",
+				"import": "./dist/index.mjs"
+			}
+		}
 	},
 	"scripts": {
 		"test": "vitest run",
@@ -35,9 +42,9 @@
 		"pnpm": ">=10"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.0.4",
+		"@biomejs/biome": "^2.0.6",
 		"@libsql/client": "^0.15.9",
-		"@types/node": "^24.0.3",
+		"@types/node": "^24.0.4",
 		"better-auth": "^1.2.10",
 		"remult": "^3.0.6-next.0",
 		"tsup": "^8.5.0",
