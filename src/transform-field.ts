@@ -126,11 +126,11 @@ function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["
 function transformFieldProps({ required, defaultValue, type, unique, fieldName }: FieldAttribute): string {
 	const props = Object.entries({
 		required,
-		defaultValue: transformDefaultVal({ defaultValue }),
-		validate: transformValidators({ type, unique, fieldName }),
 		allowNull: transformNullable({ type, fieldName }),
+		includeInApi: fieldName === "email" ? "Role_Auth.Role_Auth__Admin" : undefined,
 		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
-		//
+		validate: transformValidators({ type, unique, fieldName }),
+		defaultValue: transformDefaultVal({ defaultValue }),
 		// NOTE: dbReadOnly doesn't seem to work as expected
 		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
 	})
