@@ -67,9 +67,10 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 			supportsJSON: true,
 			debugLogs: adapterCfg.debugLogs ?? false,
 		},
-		adapter: ({ options }) => {
+		adapter: ({ options, debugLog }) => {
 			return {
 				async createSchema({ file, tables }) {
+					debugLog("createSchema", { file, tables })
 					return {
 						code: transformSchema(tables, options),
 						path: file ?? "./auth-schema.ts",
@@ -77,16 +78,19 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 					}
 				},
 				async create({ model, data }) {
+					debugLog("create", { model, data })
 					// NOTE: better-auth already generates an id for us. It's in data.
 					// NOTE: for some reason, remult doesn't persist on "save" but does on "insert"
 					return getRepo(model).then(repo => repo.insert(data) as Promise<typeof data>)
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
+					debugLog("findOne", { model, where })
 					return getRepo(model).then(repo => repo.findOne({
 						where: transformWhereClause(where),
 					}) as Promise<T>)
 				},
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
+					debugLog("findMany", { model, where, sortBy, limit, offset })
 					const modelRepo = await getRepo(model)
 					const transformedWhere = where ? transformWhereClause(where) : undefined
 					const orderBy = sortBy ? { [sortBy.field]: sortBy.direction } : undefined
@@ -146,9 +150,11 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 					return result.rows satisfies T[]
 				},
 				async count({ model, where }) {
+					debugLog("count", { model, where })
 					return getRepo(model).then(repo => repo.count(transformWhereClause(where)))
 				},
 				async update({ model, where, update: values }) {
+					debugLog("update", { model, where, values })
 					//
 					// Sanity check. Shouldn't happen
 					//)
@@ -174,12 +180,14 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 					return modelRepo.update(modelId, values as Record<string, unknown>) as Promise<typeof values>
 				},
 				async updateMany({ model, where, update: values }) {
+					debugLog("updateMany", { model, where, values })
 					return getRepo(model).then(repo => repo.updateMany({
 						where: transformWhereClause(where),
 						set: values as Record<string, unknown>,
 					}))
 				},
 				async delete({ model, where }) {
+					debugLog("delete", { model, where })
 					//
 					// Sanity check. Shouldn't happen
 					//
@@ -214,6 +222,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 					}
 				},
 				async deleteMany({ model, where }) {
+					debugLog("deleteMany", { model, where })
 					return getRepo(model).then(repo => repo.deleteMany({ where: transformWhereClause(where) }))
 				},
 				options: adapterCfg,
