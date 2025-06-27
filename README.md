@@ -1,102 +1,96 @@
 # remult-better-auth
 
-Adapter to use [better-auth](https://www.better-auth.com) with [remult](https://remult.dev)
+This adapter allows you to use [better-auth](https://www.better-auth.com) with [remult](https://remult.dev).
 
-## Installation
+## Default usage
 
-```console
+```sh
+# Install as dev dependencies.
+npm add better-auth @nerdfolio/remult-better-auth -D
 
-pnpm i @nerdfolio/remult-better-auth
-
+# run the generate command.
+npm run remult-better-auth generate
+# It will:
+#   - use `/src/modules/auth/server/better-auth-config.ts` or create it and use it. (You can escape this by passing `--config`).
+#   - generate entities `/src/modules/auth/entities.ts`. (You can escape this by passing `--output`).
 ```
 
-## Generate Schema
+## Examples
 
-### With @better-auth/cli
+### `better-auth-config.ts`
 
-Now that [better-auth PR3006](https://github.com/better-auth/better-auth/pull/3006) has been merged (v1.2.9 onward), you can use the @better-auth/cli as described by the better-auth team
+_usually in `src/modules/auth/server/better-auth-config.ts`_
 
-```console
+```ts
+import { betterAuth } from "better-auth";
+import { remultAdapter } from "@nerdfolio/remult-better-auth";
+import { remult } from "remult";
 
-pnpx @better-auth/cli@latest generate
+// TODO: remove `const authEntities = {};` and use the import under.
+const authEntities = {};
+// import { authEntities } from "../entities";
 
+export default betterAuth({
+  database: remultAdapter(remult, {
+    authEntities,
+  }),
+});
 ```
 
-See `pnpx @better-auth/cli help` for more advanced usage hints.
+### `entities.ts`
 
-Here is [a generated schema example](examples/generated-schema.ts)
+_usually in `src/modules/auth/entities.ts`_
 
-### With this adapter's cli
+[Check out the code](examples/entities.ts)
 
-This adapter comes with a single-command CLI to generate the relevant `better-auth` schema as `remult` entities:
-`User, Account, Session, Verification`. After the installation, run:
+## Using Module
 
-```console
+Add your `auth` module to `remultApi`.
 
-pnpm remult-better-auth generate --config ./auth.ts --output ./db/auth-schema.ts
-
-```
-
-`--config` is required. It refers to the auth.ts setup file for your project.
-If `--output` is not provided, the default value is `./auth-schema.ts`.
-
-You may notice that this mimicks `@better-auth/cli`. Prior to [better-auth PR3006](https://github.com/better-auth/better-auth/pull/3006), the @better-auth/cli does not use the `createSchema` function from custom adapters. It only supported built-in generators for kysely, drizzle, and prisma.
-
-Here is [a generated schema example](examples/generated-schema.ts)
-
-## Usage
-
-Follow the Remult setup to define the api for your particular web framework. For example, in SolidStart, it would be something
-like
-
-```typescript
-// src/api.ts
-
-import { auth } from "./auth"
+```ts
+// src/server/api.ts
+import { auth } from "$module/auth/server"
 
 export const api = remultApi({
-	entities: [...],
-	dataProvider: ...,
-	async getUser({request}) {
-		const s = await auth.api.getSession({
-			headers: request.headers
-		})
+  modules: [auth()],
+})
+```
+Check out all the [examples folder](./examples)
 
-		if (!s) {
-			throw new BetterAuthError(
-				"getUserInfo: No session found in request.",
-				JSON.stringify(request)
-			)
-		}
+## Manual steps not using remult module
 
-		const { id = "", name = "" } = s ? s.user : {}
-		const roles = "role" in s.user
-			? (s.user.role as string).split(",").map((r) => r.trim())
-			: []satisfies string[]
+You will need to
 
-		return { id, name, roles } satisfies UserInfo
-	},
-	...
+1. Add generated `entities` to `remultApi`.
+```ts
+// src/server/api.ts
+import { authEntities } from "PATH/TO/entities.ts"
+
+export const api = remultApi({
+  entities: [Object.values(authEntities)],
 })
 ```
 
-Then pass the remult instance or its dataProvider or a promise to either to `@nerdfolio/remult-better-auth`. These values can be obtained
-via `api.getRemult()` or `(await api.getRemult()).dataProvider`.
+2. fill `getUser` method in `remultApi` to teach remult how to get the user from the session.
+```ts
+// src/server/api.ts
+import { authEntities } from "PATH/TO/entities.ts"
 
-```typescript
-import { betterAuth } from "better-auth"
-import { api } from "~/api"
-import { User, Account, Session, Verification } from "./src/auth-schema" // generated via the cli
+export const api = remultApi({
+  async getUser({request}) {
+    const s = await auth.api.getSession({
+      headers: request.headers
+    })
 
-return betterAuth({
-	database: remultAdapter(api.getRemult(), {
-		authEntities: {User, Account, Session, Verification}
-	}),
-	...anyOtherBetterAuthOptions
+    if (!s) return undefined
+
+    return {
+      id: s.user.id,
+      name: s.user.name,
+      roles: [],
+    } satisfies UserInfo
 })
 ```
+_Other option: You can also fill `remult.user = ...` in `initRequest` of `remultApi`._
 
-Note: if you define `getUser` using `auth` as above and are annoyed with the compile-time circular dependency between api.ts and auth.ts,
-you can define the dataProvider in a separate file and use it separately to define api and auth.
-
-For the scripting scenario, you'll just need to ass the dataProvider.
+3. Add the [better-auth integration](https://www.better-auth.com/docs/integrations/svelte-kit) for your web framework.
