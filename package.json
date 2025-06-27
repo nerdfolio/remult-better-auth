@@ -39,7 +39,7 @@
 		"@libsql/client": "^0.15.9",
 		"@types/node": "^24.0.3",
 		"better-auth": "^1.2.10",
-		"remult": "^3.0.5",
+		"remult": "^3.0.6-next.0",
 		"tsup": "^8.5.0",
 		"tsx": "^4.20.3",
 		"vitest": "^3.2.4"

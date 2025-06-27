@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises"
 import { type BetterAuthOptions, logger } from "better-auth"
 import { Remult } from "remult"
 import { remultAdapter } from "./remult-ba"
+import { join } from "node:path"
 
 export async function generateRemultSchema({ options, file }: { options: BetterAuthOptions; file: string }) {
 	const adapter = remultAdapter(new Remult(), {
@@ -30,4 +31,59 @@ export async function generateRemultSchema({ options, file }: { options: BetterA
 	const content = [overwrite ? pre : `\n${pre}`, code, post].join("\n")
 	await writeFile(path, content, { encoding: "utf-8", flag: overwrite ? "w+" : "a" })
 	return path
+}
+
+export async function generateRemultModule({modulePath}: {modulePath: string}) {
+	const moduleServerIndex = join(modulePath, "server/index.ts")
+	const contentServerIndex = `import { Module } from 'remult/server'
+import { authEntities } from '../entities'
+import * as betterAuthConfig from './better-auth-config'
+import type { UserInfo } from 'remult'
+
+export const auth = ()=>{
+  return new Module({
+    key: 'auth',
+    entities: Object.values(authEntities),
+		initRequest: async (event) => {
+			const s = await betterAuthConfig.auth.api.getSession({
+				headers: new Headers(event.request.headers), // Framework dependent for now*
+			});
+
+			if(!s) return undefined
+
+			// Craft UserInfo from session
+			return {
+				id: s.user.id,
+				name: s.user.name,
+				roles: [],
+			} satisfies UserInfo;
+		}
+  })
+}`
+	await writeFile(moduleServerIndex, contentServerIndex, { encoding: "utf-8" })
+
+	const moduleServerConfig = join(modulePath, "server/better-auth-config.ts")
+	const contentServerConfig = `import { remultAdapter } from "@nerdfolio/remult-better-auth";
+import { betterAuth } from "better-auth";
+import { authEntities } from "../entities";
+import { remult } from "remult";
+
+export const auth = betterAuth({
+  database: remultAdapter(remult, {
+    authEntities,
+  }),
+});`
+	await writeFile(moduleServerConfig, contentServerConfig, { encoding: "utf-8", flag: "w+" })
+
+	const moduleServerHandle = join(modulePath, "server/handle.ts")
+	const contentServerHandle = `// Example of integration with svelte-kit. See https://www.better-auth.com/docs/integrations/svelte-kit
+// in hooks.server.ts: import { handleAuth } from '$module/auth/server/handle'
+import { svelteKitHandler } from "better-auth/svelte-kit";
+import { auth } from "./better-auth-config";
+import type { Handle } from "@sveltejs/kit";
+
+export const handleAuth: Handle = async ({ event, resolve }) => {
+  return svelteKitHandler({ event, resolve, auth });
+};`
+	await writeFile(moduleServerHandle, contentServerHandle, { encoding: "utf-8" })
 }

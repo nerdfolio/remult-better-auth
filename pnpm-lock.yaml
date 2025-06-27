@@ -28,8 +28,8 @@ importers:
         specifier: ^1.2.10
         version: 1.2.10
       remult:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.6-next.0
+        version: 3.0.6-next.0
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(jiti@2.4.2)(postcss@8.5.6)(tsx@4.20.3)(typescript@5.8.3)
@@ -915,8 +915,8 @@ packages:
   reflect-metadata@0.1.14:
     resolution: {integrity: sha512-ZhYeb6nRaXCfhnndflDK8qI6ZQ/YcWZCISRAWICW9XYqMUwjZM9Z0DveWX/ABN01oxSHwVxKQmxeYZSsm0jh5A==}
 
-  remult@3.0.5:
-    resolution: {integrity: sha512-37hprQ6MnbS/Ps+Ax+f6n1LKKezILX9/kJbHs9Ni1Jvu9J524bWuVG5NXs+e81eMKEUO6LcVmm5VO1xt/YBYfw==}
+  remult@3.0.6-next.0:
+    resolution: {integrity: sha512-IqaIQ5rjfOSiRmEmI5IXAU6UZcl/82U0qpXgWCh1XXF/12y5YI1E3KXWpRoYnUSaaoR3dAwIDQ3H3QFennMZyw==}
 
   resolve-from@5.0.0:
     resolution: {integrity: sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==}
@@ -1961,7 +1961,7 @@ snapshots:
 
   reflect-metadata@0.1.14: {}
 
-  remult@3.0.5:
+  remult@3.0.6-next.0:
     dependencies:
       '@paralleldrive/cuid2': 2.2.2
       reflect-metadata: 0.1.14

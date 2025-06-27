@@ -4,33 +4,18 @@ import { type BetterAuthOptions, logger } from "better-auth"
 import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
 import { version } from "../package.json"
-import { generateRemultSchema } from "./remult-generate-schema"
+import { generateRemultModule, generateRemultSchema } from "./remult-generate-schema"
 import { RemultBetterAuthError } from "./utils"
 import { writeFile } from "node:fs/promises"
 
 async function getBetterAuthOptions(configFile?: string) {
 	const defaultOpts = {	} as BetterAuthOptions
+	let firstRun = false
 	async function loadConfigFile(configFile?: string) {
 		configFile = configFile ?? "./src/modules/auth/server/better-auth-config.ts"
 		if (!existsSync(configFile)) {
-// 			const content = `// FIRST RUN //
-// import { betterAuth } from "better-auth";
-// import { remultAdapter } from "@nerdfolio/remult-better-auth";
-// import { InMemoryDataProvider } from "remult";
-
-// // TODO: remove \`const authEntities = {};\` and use the import under.
-// const authEntities = {};
-// // import { authEntities } from "../entities";
-
-// export default betterAuth({
-//   // TODO: replace \`new InMemoryDataProvider()\` with remult or your dataProvider.
-//   database: remultAdapter(new InMemoryDataProvider(), {
-//     authEntities,
-//   }),
-// });
-// `
-const content = `// FIRST RUN //
-import { betterAuth } from "better-auth"
+			firstRun = true
+const content = `import { betterAuth } from "better-auth"
 import { memoryAdapter } from "better-auth/adapters/memory"
 
 export const auth = betterAuth({
@@ -72,6 +57,7 @@ export const auth = betterAuth({
 	return {
 		source: configFile,
 		options: await loadConfigFile(configFile),
+		firstRun
 	}
 }
 
@@ -92,7 +78,7 @@ const generateCmd = defineCommand({
 		},
 	},
 	run: async ({ args: { config: configFile, output } }) => {
-		const { source, options } = await getBetterAuthOptions(configFile)
+		const { source, options, firstRun } = await getBetterAuthOptions(configFile)
 
 		if (!source) {
 			logger.info("No better-auth config file found. Using default options:", options)
@@ -100,7 +86,10 @@ const generateCmd = defineCommand({
 			logger.info("Using better-auth options from:", source)
 			logger.info("options:", options)
 		}
-		return generateRemultSchema({ options, file: output })
+		await generateRemultSchema({ options, file: output })
+		if(firstRun){
+			await generateRemultModule({modulePath: "./src/modules/auth"})
+		}
 	},
 })
 
