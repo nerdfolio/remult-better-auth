@@ -128,7 +128,7 @@ function transformFieldProps({ required, defaultValue, type, unique, fieldName }
 		required,
 		allowNull: transformNullable({ type, fieldName }),
 		includeInApi: fieldName === "email" ? "Role_Auth.Role_Auth__Admin" : undefined,
-		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
+		// allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
 		validate: transformValidators({ type, unique, fieldName }),
 		defaultValue: transformDefaultVal({ defaultValue }),
 		// NOTE: dbReadOnly doesn't seem to work as expected
