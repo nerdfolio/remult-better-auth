@@ -72,7 +72,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 				async createSchema({ file, tables }) {
 					return {
 						code: transformSchema(tables, options),
-						path: file ?? "./auth-schema.ts",
+						path: file ?? "./src/modules/auth/entities.ts",
 						overwrite: true,
 					}
 				},

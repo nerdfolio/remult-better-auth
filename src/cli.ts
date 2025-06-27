@@ -6,12 +6,44 @@ import { defineCommand, runMain } from "citty"
 import { version } from "../package.json"
 import { generateRemultSchema } from "./remult-generate-schema"
 import { RemultBetterAuthError } from "./utils"
+import { writeFile } from "node:fs/promises"
 
 async function getBetterAuthOptions(configFile?: string) {
-	const defaultOpts = {} as BetterAuthOptions
-	async function loadConfigFile(configFile: string) {
+	const defaultOpts = {	} as BetterAuthOptions
+	async function loadConfigFile(configFile?: string) {
+		configFile = configFile ?? "./src/modules/auth/server/better-auth-config.ts"
 		if (!existsSync(configFile)) {
-			throw new RemultBetterAuthError(`configFile does not exist: ${configFile}`)
+// 			const content = `// FIRST RUN //
+// import { betterAuth } from "better-auth";
+// import { remultAdapter } from "@nerdfolio/remult-better-auth";
+// import { InMemoryDataProvider } from "remult";
+
+// // TODO: remove \`const authEntities = {};\` and use the import under.
+// const authEntities = {};
+// // import { authEntities } from "../entities";
+
+// export default betterAuth({
+//   // TODO: replace \`new InMemoryDataProvider()\` with remult or your dataProvider.
+//   database: remultAdapter(new InMemoryDataProvider(), {
+//     authEntities,
+//   }),
+// });
+// `
+const content = `
+// FIRST RUN //
+import { betterAuth } from "better-auth"
+import { memoryAdapter } from "better-auth/adapters/memory"
+
+export const auth = betterAuth({
+	database: memoryAdapter({}) //just to make better-auth happy. Not needed for schema gen
+})`
+			// Ensure all directories exist before writing the file
+			await import("node:fs/promises").then(async fs => {
+				const idx = configFile.lastIndexOf("/")
+				const dir = idx !== -1 ? configFile.slice(0, idx) : "."
+				await fs.mkdir(dir, { recursive: true })
+				await fs.writeFile(configFile, content, { encoding: "utf-8" })
+			})
 		}
 
 		const {
@@ -40,7 +72,7 @@ async function getBetterAuthOptions(configFile?: string) {
 
 	return {
 		source: configFile,
-		options: configFile ? await loadConfigFile(configFile) : defaultOpts,
+		options: await loadConfigFile(configFile),
 	}
 }
 
@@ -53,12 +85,11 @@ const generateCmd = defineCommand({
 		config: {
 			type: "string",
 			description: "Path to better-auth configuration",
-			required: true,
 		},
 		output: {
 			type: "string",
 			description: "Path to output file",
-			default: "./auth-schema.ts",
+			default: "./src/modules/auth/entities.ts",
 		},
 	},
 	run: async ({ args: { config: configFile, output } }) => {
