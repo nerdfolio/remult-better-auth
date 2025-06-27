@@ -29,8 +29,7 @@ async function getBetterAuthOptions(configFile?: string) {
 //   }),
 // });
 // `
-const content = `
-// FIRST RUN //
+const content = `// FIRST RUN //
 import { betterAuth } from "better-auth"
 import { memoryAdapter } from "better-auth/adapters/memory"
 
