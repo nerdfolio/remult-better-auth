@@ -1,6 +1,6 @@
 # remult-better-auth
 
-Adapter to use [better-auth](https://www.better-auth.com) with [remult ORM](https://remult.dev)
+Adapter to use [better-auth](https://www.better-auth.com) with [remult](https://remult.dev)
 
 ## Installation
 

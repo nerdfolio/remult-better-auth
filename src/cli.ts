@@ -47,7 +47,7 @@ async function getBetterAuthOptions(configFile?: string) {
 const generateCmd = defineCommand({
 	meta: {
 		name: "generate",
-		description: "Generate Remult ORM entities for better-auth",
+		description: "Generate Remult entities for better-auth",
 	},
 	args: {
 		config: {
@@ -78,7 +78,7 @@ const main = defineCommand({
 	meta: {
 		name: "remult-better-auth",
 		version: version ?? "_",
-		description: "Cli to generate Remult ORM entities for better-auth",
+		description: "Cli to generate Remult entities for better-auth",
 	},
 	subCommands: {
 		generate: generateCmd,
