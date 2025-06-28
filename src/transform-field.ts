@@ -6,12 +6,12 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 		// NOTE: sqlite says "autoincrement" adds unnecessary overhead (https://www.sqlite.org/autoinc.html)
 		// however we have to use it here because remult does not give us access to "primary key" constraint
 		//
-		return `@Fields.autoIncrement({required: true, allowNull: false, allowApiUpdate: false})
+		return `@Fields.autoIncrement({required: true, allowApiUpdate: false})
 		${name}! : number`.trim()
 	}
 
 	// better-auth handles id generation for us and pass it to create() so string type suffices. No need for cuid().
-	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowNull: false, allowApiUpdate: false})
+	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
 		${name}! : string`.trim()
 }
 
@@ -36,17 +36,17 @@ export function transformField<T extends FieldType>(
 			break
 		case "string[]":
 			field = `@Fields.json(${transformedProps})
-			${fieldName} : string[] = []
+			${fieldName}: string[] = []
 			`
 			break
 		case "number":
 			field = `@Fields.integer(${transformedProps})
-			${fieldName} : number
+			${fieldName}?: number
 			`
 			break
 		case "number[]":
 			field = `@Fields.json(${transformedProps})
-			${fieldName} : number[] = []
+			${fieldName}: number[] = []
 			`
 			break
 
@@ -57,12 +57,12 @@ export function transformField<T extends FieldType>(
 			break
 		case "date":
 			if (fieldName === "createdAt") {
-				field = `@Fields.createdAt(${transformedProps})
-				${fieldName}! : Date
+				field = `@Fields.createdAt()
+				${fieldName} = new Date()
 				`
 			} else if (fieldName === "updatedAt") {
-				field = `@Fields.updatedAt(${transformedProps})
-				${fieldName}! : Date
+				field = `@Fields.updatedAt()
+				${fieldName} = new Date()
 				`
 			} else {
 				field = `@Fields.date(${transformedProps})
@@ -95,12 +95,12 @@ export function transformField<T extends FieldType>(
 }
 
 function transformNullable({ type, fieldName }: { type: FieldType; fieldName?: string }) {
-	if (
-		(type === "string" && fieldName === "email") ||
-		(type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "")) ||
-		type === "boolean"
-	)
-		return false
+	// if (
+	// 	(type === "string" && fieldName === "email") ||
+	// 	(type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "")) ||
+	// 	type === "boolean"
+	// )
+	// 	return false
 
 	return undefined
 }
@@ -126,11 +126,10 @@ function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["
 function transformFieldProps({ required, defaultValue, type, unique, fieldName }: FieldAttribute): string {
 	const props = Object.entries({
 		required,
-		defaultValue: transformDefaultVal({ defaultValue }),
-		validate: transformValidators({ type, unique, fieldName }),
 		allowNull: transformNullable({ type, fieldName }),
-		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
-		//
+		includeInApi: fieldName === "email" ? "Role_Auth.Role_Auth__Admin" : undefined,
+		validate: transformValidators({ type, unique, fieldName }),
+		defaultValue: transformDefaultVal({ defaultValue }),
 		// NOTE: dbReadOnly doesn't seem to work as expected
 		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
 	})

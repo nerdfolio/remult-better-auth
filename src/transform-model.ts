@@ -10,6 +10,10 @@ export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthO
 	return trimLines(`
 	import {Entity, Fields, Relations, Validators} from 'remult'
 
+	export const Role_Auth = {
+		Role_Auth__Admin: 'Role_Auth__Admin'
+	} as const
+
 	{{ENTITIES}}
 	`).replace("{{ENTITIES}}",
 		Object.values(tables).map(({ modelName, fields }) => transformModel({
@@ -22,7 +26,9 @@ export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthO
 function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useNumberId?: boolean }) {
 	const className = modelNameToClassName(modelName)
 	const entity = trimLines(`
-	@Entity<${className}>('${modelName}', {})
+	@Entity<${className}>('${modelName}', {
+		allowApiCrud: Role_Auth.Role_Auth__Admin
+})
 	export class ${className} {
 		{{FIELDS}}
 	}

@@ -4,14 +4,23 @@ import { type BetterAuthOptions, logger } from "better-auth"
 import { loadConfig } from "c12"
 import { defineCommand, runMain } from "citty"
 import { version } from "../package.json"
-import { generateRemultSchema } from "./remult-generate-schema"
-import { RemultBetterAuthError } from "./utils"
+import { generateRemultModule, generateRemultSchema } from "./remult-generate-schema"
+import { writeFile } from "./utils"
 
 async function getBetterAuthOptions(configFile?: string) {
-	const defaultOpts = {} as BetterAuthOptions
-	async function loadConfigFile(configFile: string) {
+	const defaultOpts = {	} as BetterAuthOptions
+	let firstRun = false
+	async function loadConfigFile(configFile?: string) {
+		configFile = configFile ?? "./src/modules/auth/server/better-auth-config.ts"
 		if (!existsSync(configFile)) {
-			throw new RemultBetterAuthError(`configFile does not exist: ${configFile}`)
+			firstRun = true
+const content = `import { betterAuth } from "better-auth"
+import { memoryAdapter } from "better-auth/adapters/memory"
+
+export const auth = betterAuth({
+	database: memoryAdapter({}) //just to make better-auth happy. Not needed for schema gen
+})`
+			await writeFile(configFile, content)
 		}
 
 		const {
@@ -40,29 +49,29 @@ async function getBetterAuthOptions(configFile?: string) {
 
 	return {
 		source: configFile,
-		options: configFile ? await loadConfigFile(configFile) : defaultOpts,
+		options: await loadConfigFile(configFile),
+		firstRun
 	}
 }
 
 const generateCmd = defineCommand({
 	meta: {
 		name: "generate",
-		description: "Generate Remult ORM entities for better-auth",
+		description: "Generate Remult entities for better-auth",
 	},
 	args: {
 		config: {
 			type: "string",
 			description: "Path to better-auth configuration",
-			required: true,
 		},
 		output: {
 			type: "string",
 			description: "Path to output file",
-			default: "./auth-schema.ts",
+			default: "./src/modules/auth/entities.ts",
 		},
 	},
 	run: async ({ args: { config: configFile, output } }) => {
-		const { source, options } = await getBetterAuthOptions(configFile)
+		const { source, options, firstRun } = await getBetterAuthOptions(configFile)
 
 		if (!source) {
 			logger.info("No better-auth config file found. Using default options:", options)
@@ -70,7 +79,10 @@ const generateCmd = defineCommand({
 			logger.info("Using better-auth options from:", source)
 			logger.info("options:", options)
 		}
-		return generateRemultSchema({ options, file: output })
+		await generateRemultSchema({ options, file: output })
+		if(firstRun){
+			await generateRemultModule({modulePath: "./src/modules/auth"})
+		}
 	},
 })
 
@@ -78,7 +90,7 @@ const main = defineCommand({
 	meta: {
 		name: "remult-better-auth",
 		version: version ?? "_",
-		description: "Cli to generate Remult ORM entities for better-auth",
+		description: "Cli to generate Remult entities for better-auth",
 	},
 	subCommands: {
 		generate: generateCmd,
