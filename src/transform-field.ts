@@ -130,7 +130,8 @@ function transformFieldProps({ required, defaultValue, type, unique, fieldName }
 		defaultValue: transformDefaultVal({ defaultValue }),
 		validate: transformValidators({ type, unique, fieldName }),
 		// allowNull: transformNullable({ type, fieldName }), NOTE: per @jyccouet, allowNull defaults to false by remult so we don't need this.
-		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined,
+		allowApiUpdate: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? false : undefined,
+
 		//
 		// NOTE: dbReadOnly doesn't seem to work as expected
 		// dbReadOnly: type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "") ? true : undefined
