@@ -6,12 +6,12 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 		// NOTE: sqlite says "autoincrement" adds unnecessary overhead (https://www.sqlite.org/autoinc.html)
 		// however we have to use it here because remult does not give us access to "primary key" constraint
 		//
-		return `@Fields.autoIncrement({required: true, allowNull: false, allowApiUpdate: false})
+		return `@Fields.autoIncrement({required: true, allowApiUpdate: false})
 		${name}! : number`.trim()
 	}
 
 	// better-auth handles id generation for us and pass it to create() so string type suffices. No need for cuid().
-	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowNull: false, allowApiUpdate: false})
+	return `@Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
 		${name}! : string`.trim()
 }
 
@@ -95,12 +95,12 @@ export function transformField<T extends FieldType>(
 }
 
 function transformNullable({ type, fieldName }: { type: FieldType; fieldName?: string }) {
-	if (
-		(type === "string" && fieldName === "email") ||
-		(type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "")) ||
-		type === "boolean"
-	)
-		return false
+	// if (
+	// 	(type === "string" && fieldName === "email") ||
+	// 	(type === "date" && ["createdAt", "updatedAt"].includes(fieldName ?? "")) ||
+	// 	type === "boolean"
+	// )
+	// 	return false
 
 	return undefined
 }
