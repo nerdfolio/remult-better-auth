@@ -29,15 +29,15 @@ describe("remult-better-auth", async () => {
 	mkdirSync(testDir, { recursive: true })
 
 	const schemaFile = await generateRemultSchema({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
-	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
+	const schemaContent: any = await import(schemaFile)
 
 	afterAll(async () => {
 		rmSync(testDir, { recursive: true })
 	})
 
-	describe("memory db", () => testSuite(testEntities, initDatabaseProvider("memory", "")))
-	describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
-	describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
+	describe("memory db", () => testSuite(schemaContent.authEntities, initDatabaseProvider("memory", "")))
+	describe("json db", () => testSuite(schemaContent.authEntities, initDatabaseProvider("json", testDir)))
+	describe("sqlite db", () => testSuite(schemaContent.authEntities, initDatabaseProvider("sqlite", testDir)))
 })
 
 async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: DataProvider) {
