@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - "**"
+
+jobs:
+  part-1:
+    name: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+
+    env:
+      CI: true
+
+    steps:
+      - name: 🎉 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: 🪛 pnpm setup
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+          run_install: false
+
+      - name: 🛠️ node setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.11.0
+          cache: pnpm
+
+      - name: 🧑‍💻 install
+        run: pnpm i
+
+      # - name: 🧹 lint
+      #   run: pnpm lint
+
+      # - name: 💪 check
+      #   run: pnpm check
+
+      - name: 🚀 build
+        run: pnpm build
+
+      - name: 🕹️ test
+        run: pnpm test
