@@ -32,6 +32,7 @@
 	"scripts": {
 		"test": "vitest run",
 		"build": "tsup-node",
+		"gen": "pnpm gen-rba && pnpm gen-ba",
 		"gen-rba": "tsx ./src/cli.ts generate --config ./examples/rba/auth.ts --output ./examples/rba/generated-schema.ts",
 		"gen-ba": "pnpx @better-auth/cli@latest generate --config ./examples/ba/auth.ts --output ./examples/ba/authEntities.ts -y",
 		"prepare": "pnpm build && pnpm test"

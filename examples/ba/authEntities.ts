@@ -22,7 +22,7 @@ export class User {
   @Fields.string({required: true})
   name = ''
 
-  @Fields.string({required: true, validate: [Validators.unique(), Validators.email()]})
+  @Fields.string({required: true, includeInApi: Role_Auth.Role_Auth__Admin, validate: [Validators.unique(), Validators.email()]})
   email = ''
 
   @Fields.boolean({required: true, defaultValue: () => false})
@@ -31,10 +31,10 @@ export class User {
   @Fields.string({required: false})
   image = ''
 
-  @Fields.createdAt({required: true, defaultValue: () =>  new Date(), allowApiUpdate: true})
+  @Fields.createdAt()
   createdAt! : Date
 
-  @Fields.updatedAt({required: true, defaultValue: () =>  new Date(), allowApiUpdate: true})
+  @Fields.updatedAt()
   updatedAt! : Date
 }
 
@@ -52,10 +52,10 @@ export class Session {
   @Fields.string({required: true, validate: Validators.unique()})
   token = ''
 
-  @Fields.createdAt({required: true, allowApiUpdate: true})
+  @Fields.createdAt()
   createdAt! : Date
 
-  @Fields.updatedAt({required: true, allowApiUpdate: true})
+  @Fields.updatedAt()
   updatedAt! : Date
 
   @Fields.string({required: false})
@@ -110,10 +110,10 @@ export class Account {
   @Fields.string({required: false})
   password = ''
 
-  @Fields.createdAt({required: true, allowApiUpdate: true})
+  @Fields.createdAt()
   createdAt! : Date
 
-  @Fields.updatedAt({required: true, allowApiUpdate: true})
+  @Fields.updatedAt()
   updatedAt! : Date
 }
 
@@ -134,10 +134,10 @@ export class Verification {
   @Fields.date({required: true})
   expiresAt = new Date()
 
-  @Fields.createdAt({required: false, defaultValue: () =>  new Date(), allowApiUpdate: true})
+  @Fields.createdAt()
   createdAt! : Date
 
-  @Fields.updatedAt({required: false, defaultValue: () =>  new Date(), allowApiUpdate: true})
+  @Fields.updatedAt()
   updatedAt! : Date
 }
 
