@@ -19,3 +19,8 @@ export function trimLines(str: string, indentYN = false) {
 export function modelNameToClassName(modelName: string) {
 	return modelName.charAt(0).toUpperCase() + modelName.slice(1)
 }
+
+// Let's start very simple.
+export function modelNameToPlural(modelName: string) {
+	return modelName + "s"
+}

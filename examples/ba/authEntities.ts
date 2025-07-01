@@ -1,6 +1,20 @@
-import {Entity, Fields, Relations, Validators} from 'remult'
+import { Allow, Entity, Fields, Relations, remult, Validators } from 'remult'
 
-@Entity<User>('user', {})
+export const Role_Auth = {
+Role_Auth__Admin: 'Role_Auth__Admin',
+} as const
+
+@Entity<User>('users', {
+allowApiCrud: Role_Auth.Role_Auth__Admin,
+allowApiRead: Allow.authenticated,
+allowApiUpdate: (item)=>{ return item?.id=== remult.user?.id },
+apiPrefilter: ()=>{
+if(!remult.user?.id){
+throw new Error("User not authenticated")
+}
+return { id: remult.user?.id }
+}
+})
 export class User {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
@@ -25,7 +39,9 @@ export class User {
 }
 
 
-@Entity<Session>('session', {})
+@Entity<Session>('sessions', {
+allowApiCrud: Role_Auth.Role_Auth__Admin,
+})
 export class Session {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
@@ -55,7 +71,9 @@ export class Session {
 }
 
 
-@Entity<Account>('account', {})
+@Entity<Account>('accounts', {
+allowApiCrud: Role_Auth.Role_Auth__Admin,
+})
 export class Account {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
@@ -100,7 +118,9 @@ export class Account {
 }
 
 
-@Entity<Verification>('verification', {})
+@Entity<Verification>('verifications', {
+allowApiCrud: Role_Auth.Role_Auth__Admin,
+})
 export class Verification {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
@@ -120,3 +140,10 @@ export class Verification {
   @Fields.updatedAt({required: false, defaultValue: () =>  new Date(), allowApiUpdate: true})
   updatedAt! : Date
 }
+
+export const authEntities = {
+User,
+Session,
+Account,
+Verification,
+};
