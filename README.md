@@ -59,7 +59,9 @@ You can add other options following [better-auth basic-usage](https://www.better
 
 For example, [SvelteKit Integration](https://www.better-auth.com/docs/integrations/svelte-kit), you will find all other integrations beside.
 
-6. Teach `remult` who is the current user with the `getUser` function.
+6. Teach `remult` who is the current user for the backend.
+
+One option is to use the `getUser` function of `remultApi` and return the user.
 
 ```ts
 // src/api.ts
@@ -75,18 +77,42 @@ export const api = remultApi({
 
     // No user
     if (!s) return undefined
+		// or throw an error
+		// if (!s) {
+		//  console.error("getRequestUser: No session found in request.", JSON.stringify(request))
+		//  throw new BetterAuthError("Unauthorized")
+	  // }
 
-    return {
-      id: s.user.id,
-      name: s.user.name
-      roles: []
-    } satisfies UserInfo
+		const u: UserInfo = {
+			id: s.user.id,
+			name: s.user.name
+		}
+
+		// add some logic to fill other user props
+		// u.roles = s.user.role?.split(",").map((r) => r.trim()) ?? []
+
+    return u
   }
 })
 ```
 In this file, you will probably add some logic to define `roles` and other key props.
 You can find how to extend `UserInfo` [here](https://remult.dev/docs/custom-options#setting-up-the-types-d-ts-file-for-custom-type-extensions).
 
+7. Teach `remult` who is the current user for the frontend.
+
+For this, you need to set `remult.user` in the frontend.
+```ts
+// You can use this util function in the frontend
+// that will call your backend and set `remult.user` for you.
+remult.initUser()
+
+// or, depending on your framework
+
+// you can pass the SSR user to the frontend
+// and set `remult.user`
+let { data } = // framework SSR data
+remult.user = data.user
+```
 
 ## Advanced
 
