@@ -34,9 +34,9 @@ Options:
 
 `--output` - The schema output file
 
-See [Better Auth CLI docs](https://www.better-auth.com/docs/concepts/cli) for more CLI usage details and defaults.
+See [Better Auth CLI docs](https://www.better-auth.com/docs/concepts/cli) for further explanations.
 
-Here is [a generated schema example](examples/generated-schema.ts)
+Here is [a sample output](examples/generated-entities.ts)
 
 
 ### Initialize The Remult API
@@ -94,7 +94,6 @@ return betterAuth({
 ```
 
 > [!TIP]
-> If you define `getUser` using `auth` as above and are annoyed with the compile-time circular dependency between `api.ts` and `auth.ts`,
-you can define the dataProvider in a separate file and use it separately to define api and auth.
+> The `remultAdapter` function accepts a remult instance, a data provider instance, or their Promise-wrapped version.
 >
-> For the scripting scenario, you'll just need to ass the dataProvider.
+> When you define `getUser` using `auth` as above, there is a "compile-time" (but not run-time) circular dependency between `api.ts` and `auth.ts`. If this is not to your liking, you can also define a dataProvider separately, then use it to define api and auth.
