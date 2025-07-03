@@ -78,7 +78,7 @@ const main = defineCommand({
 	meta: {
 		name: "remult-better-auth",
 		version: version ?? "_",
-		description: "Cli to generate Remult ORM entities for better-auth",
+		description: "This CLI is deprecated. Use @better-auth/cli instead",
 	},
 	subCommands: {
 		generate: generateCmd,
