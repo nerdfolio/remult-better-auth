@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth"
-import { memoryAdapter } from "better-auth/adapters/memory"
+import { InMemoryDataProvider } from "remult"
+import { remultAdapter } from "../src"
 
 export const auth = betterAuth({
 	// incomplete example used only to test generate schema
@@ -8,5 +9,7 @@ export const auth = betterAuth({
 			email: "email_address",
 		},
 	},
-	database: memoryAdapter({}) //just to make better-auth happy. Not needed for schema gen
+	database: remultAdapter(new InMemoryDataProvider(), {
+		authEntities: {},
+	}),
 })
