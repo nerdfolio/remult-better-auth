@@ -10,6 +10,7 @@ export const auth = betterAuth({
 		},
 	},
 	database: remultAdapter(new InMemoryDataProvider(), {
+		// no need to declare entities when we're generating them
 		authEntities: {},
 	}),
 })
