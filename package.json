@@ -1,6 +1,6 @@
 {
 	"name": "@nerdfolio/remult-better-auth",
-	"version": "0.2.20",
+	"version": "0.2.21",
 	"description": "Remult ORM adapter for better-auth",
 	"license": "ISC",
 	"author": "taivo@github",
@@ -43,7 +43,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.6",
 		"@libsql/client": "^0.15.9",
-		"@types/node": "^24.0.8",
+		"@types/node": "^24.0.10",
 		"better-auth": "^1.2.12",
 		"remult": "^3.0.5",
 		"tsup": "^8.5.0",
