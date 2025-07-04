@@ -42,15 +42,21 @@ function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useN
 }
 
 function generateEntityProps(modelName: string) {
-	const userIdField = modelName === "user" ? "id" : "userId"
+	if(modelName === 'user'){
+		return `{
+			// admin can do anything
+			allowApiCrud: Roles.admin,
+			// Any one can read
+			allowApiRead: Allow.authenticated
+		}`
+	}
 
-	const adminOrOwner = `(ent, remult) => remult?.isAllowed(Roles.admin) || (!!ent?.${userIdField} && ent?.${userIdField} === remult?.user?.id )`
-	const adminOrNewUser = `(_ent, remult) => remult?.isAllowed(Roles.admin) || !remult?.user`
-
+	if(modelName === 'account'){
+		return `{
+			allowApiCrud: Roles.admin
+		}`
+	}
 	return `{
-	  allowApiRead: Allow.authenticated,
-	  allowApiUpdate: ${adminOrOwner}, // admin or owner
-	  allowApiDelete: ${adminOrOwner}, // admin or owner
-	  allowApiInsert: ${adminOrNewUser}, // admin or new user
-	}`
+    allowApiCrud: Roles.admin
+  }`
 }
