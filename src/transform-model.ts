@@ -1,7 +1,7 @@
 import type { BetterAuthOptions } from "better-auth"
 import type { BetterAuthDbSchema } from "better-auth/db"
 import { remultIdField, transformField } from "./transform-field"
-import { modelNameToClassName, trimLines } from "./utils"
+import { modelNameToClassName, modelNameToPlural, trimLines } from "./utils"
 
 type ValueOf<T> = T[keyof T]
 type ModelSchema = ValueOf<BetterAuthDbSchema>
@@ -24,7 +24,7 @@ export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthO
 function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useNumberId?: boolean }) {
 	const className = modelNameToClassName(modelName)
 	const entity = trimLines(`
-	@Entity<${className}>('${modelName}', ${generateEntityProps(modelName)})
+	@Entity<${className}>('${modelNameToPlural(modelName)}', ${generateEntityProps(modelName)})
 	export class ${className} {
 		{{FIELDS}}
 	}
