@@ -51,12 +51,7 @@ function generateEntityProps(modelName: string) {
 		}`
 	}
 
-	if(modelName === 'account'){
-		return `{
-			allowApiCrud: Roles.admin
-		}`
-	}
 	return `{
-    allowApiCrud: Roles.admin
-  }`
+		allowApiCrud: Roles.admin
+	}`
 }
