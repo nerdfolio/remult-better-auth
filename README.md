@@ -87,11 +87,17 @@ import { User, Account, Session, Verification } from "./src/auth-schema" // gene
 
 return betterAuth({
 	database: remultAdapter(api.getRemult(), {
-		authEntities: {User, Account, Session, Verification}
+		authEntities: {User, Account, Session, Verification},
 	}),
 	...anyOtherBetterAuthOptions
 })
 ```
+
+Adapter Options:
+The second argument is options for the adapter. Beside `authEntities`, there are also:
+- `debugLogs`: optional, defaults => false. When true the adapter will output what better-auth passes to it
+- `usePlural`: optional. defautls => false. When true, the generated table names will be pluralized, e.g. `users`, `accounts`
+
 
 > [!TIP]
 > The `remultAdapter` function accepts a remult instance, a data provider instance, or their Promise-wrapped version.

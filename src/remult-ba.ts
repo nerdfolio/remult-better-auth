@@ -12,17 +12,22 @@ export interface RemultAdapterOptions {
 	 * @default false
 	 */
 	debugLogs?: AdapterDebugLogs
+	/**
+	 * Whether to use plural names for the auth tables
+	 * @default false
+	 */
+	usePlural: boolean
 }
 
 /**
  * Create a BetterAuth adapter for Remult.
  *
- * @param remultOrDataProvider - instance of DataProvider or Remult
+ * @param remultOrDP - instance of DataProvider or Remult
  * @param adapterCfg - configuration for the adapter
  * @returns a BetterAuth adapter creating function, e.g. (options: BetterAuthOptions) => Adapter
  *
  */
-export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Promise<Remult | DataProvider>, adapterCfg: RemultAdapterOptions) {
+export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult | DataProvider>, adapterCfg: RemultAdapterOptions) {
 
 	type IdType = string | number
 	let remult: Remult
@@ -30,7 +35,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 
 	async function getRepo(modelName: string) {
 		if (!remult) {
-			const resolved = isPromise(remultOrDataProvider) ? await remultOrDataProvider : remultOrDataProvider
+			const resolved = isPromise(remultOrDP) ? await remultOrDP : remultOrDP
 			// remult = resolved instanceof Remult ? resolved : new Remult(resolved)
 			// NOTE: the instanceof check above is not reliable. When esm code is mixed with cjs during bundling
 			// that check returns false even though resolved was obtained via api.getRemult() thus is a Remult instance.
@@ -66,7 +71,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 			supportsNumericIds: true,
 			supportsJSON: true,
 			debugLogs: adapterCfg.debugLogs ?? false,
-			usePlural: true,
+			usePlural: adapterCfg.usePlural ?? false,
 		},
 		adapter: ({ options, debugLog }) => {
 			return {
