@@ -66,6 +66,7 @@ export function remultAdapter(remultOrDataProvider: DataProvider | Remult | Prom
 			supportsNumericIds: true,
 			supportsJSON: true,
 			debugLogs: adapterCfg.debugLogs ?? false,
+			usePlural: true,
 		},
 		adapter: ({ options, debugLog }) => {
 			return {

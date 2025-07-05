@@ -1,7 +1,7 @@
 import type { BetterAuthOptions } from "better-auth"
 import type { BetterAuthDbSchema } from "better-auth/db"
 import { remultIdField, transformField } from "./transform-field"
-import { modelNameToClassName, trimLines } from "./utils"
+import { modelNameToClassName, modelNameToPlural, trimLines } from "./utils"
 
 type ValueOf<T> = T[keyof T]
 type ModelSchema = ValueOf<BetterAuthDbSchema>
@@ -24,7 +24,7 @@ export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthO
 function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useNumberId?: boolean }) {
 	const className = modelNameToClassName(modelName)
 	const entity = trimLines(`
-	@Entity<${className}>('${modelName}', ${generateEntityProps(modelName)})
+	@Entity<${className}>('${modelNameToPlural(modelName)}', ${generateEntityProps(modelName)})
 	export class ${className} {
 		{{FIELDS}}
 	}
@@ -42,15 +42,16 @@ function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useN
 }
 
 function generateEntityProps(modelName: string) {
-	const userIdField = modelName === "user" ? "id" : "userId"
-
-	const adminOrOwner = `(ent, remult) => remult?.isAllowed(Roles.admin) || (!!ent?.${userIdField} && ent?.${userIdField} === remult?.user?.id )`
-	const adminOrNewUser = `(_ent, remult) => remult?.isAllowed(Roles.admin) || !remult?.user`
+	if(modelName === 'user'){
+		return `{
+			// admin can do anything
+			allowApiCrud: Roles.admin,
+			// Any one can read
+			allowApiRead: Allow.authenticated
+		}`
+	}
 
 	return `{
-	  allowApiRead: Allow.authenticated,
-	  allowApiUpdate: ${adminOrOwner}, // admin or owner
-	  allowApiDelete: ${adminOrOwner}, // admin or owner
-	  allowApiInsert: ${adminOrNewUser}, // admin or new user
+		allowApiCrud: Roles.admin
 	}`
 }
