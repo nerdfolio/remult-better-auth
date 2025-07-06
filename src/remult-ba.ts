@@ -1,9 +1,12 @@
 import { isPromise } from "node:util/types"
+import { capitalizeFirstLetter } from "better-auth"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import { type ClassType, type DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
+
+const DEFAULT_CREATE_SCHEMA_OUTPUT = "./auth-schema.ts" as const
 
 export interface RemultAdapterOptions {
 	authEntities: Record<string, ClassType<unknown>>
@@ -27,8 +30,10 @@ export interface RemultAdapterOptions {
  * @returns a BetterAuth adapter creating function, e.g. (options: BetterAuthOptions) => Adapter
  *
  */
-export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult | DataProvider>, adapterCfg: RemultAdapterOptions) {
-
+export function remultAdapter(
+	remultOrDP: DataProvider | Remult | Promise<Remult | DataProvider>,
+	adapterCfg: RemultAdapterOptions
+) {
 	type IdType = string | number
 	let remult: Remult
 	let authRepos: Record<string, Repository<unknown>>
@@ -40,7 +45,7 @@ export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult
 			// NOTE: the instanceof check above is not reliable. When esm code is mixed with cjs during bundling
 			// that check returns false even though resolved was obtained via api.getRemult() thus is a Remult instance.
 			// We work around it with check for the dataProvider member
-			remult = 'dataProvider' in resolved ? resolved : new Remult(resolved)
+			remult = "dataProvider" in resolved ? resolved : new Remult(resolved)
 		}
 
 		if (!authRepos) {
@@ -73,13 +78,21 @@ export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult
 			debugLogs: adapterCfg.debugLogs ?? false,
 			usePlural: adapterCfg.usePlural ?? false,
 		},
-		adapter: ({ options, debugLog }) => {
+		adapter: ({ options, debugLog, getModelName, getDefaultModelName }) => {
 			return {
 				async createSchema({ file, tables }) {
 					debugLog("createSchema", { file, tables })
 					return {
-						code: transformSchema(tables, options),
-						path: file ?? "./auth-schema.ts",
+						code: transformSchema(tables, {
+							useNumberId: options.advanced?.database?.useNumberId,
+							// NOTE: 7/5/2025 - better-auth passes us tables with model names in singular form (defaultModelName)
+							// so technically, we don't need to call getDefaultModel name here.
+							// That said, this may be a bug because it's inconsistent with the convention for methods other than `transformSchema`,
+							// where `modelName` is the potentially pluralized form and defaultModelName is the singular original form
+							getClassName: (modelName) => capitalizeFirstLetter(getDefaultModelName(modelName)),
+							getTableName: getModelName, // the table name that may be in plural form (depends on usePlural)
+						}),
+						path: file ?? DEFAULT_CREATE_SCHEMA_OUTPUT,
 						overwrite: true,
 					}
 				},
@@ -87,13 +100,16 @@ export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult
 					debugLog("create", { model, data })
 					// NOTE: better-auth already generates an id for us. It's in data.
 					// NOTE: for some reason, remult doesn't persist on "save" but does on "insert"
-					return getRepo(model).then(repo => repo.insert(data) as Promise<typeof data>)
+					return getRepo(model).then((repo) => repo.insert(data) as Promise<typeof data>)
 				},
 				async findOne<T>({ model, where }: Parameters<CustomAdapter["findOne"]>[0]) {
 					debugLog("findOne", { model, where })
-					return getRepo(model).then(repo => repo.findOne({
-						where: transformWhereClause(where),
-					}) as Promise<T>)
+					return getRepo(model).then(
+						(repo) =>
+							repo.findOne({
+								where: transformWhereClause(where),
+							}) as Promise<T>
+					)
 				},
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
 					debugLog("findMany", { model, where, sortBy, limit, offset })
@@ -157,7 +173,7 @@ export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult
 				},
 				async count({ model, where }) {
 					debugLog("count", { model, where })
-					return getRepo(model).then(repo => repo.count(transformWhereClause(where)))
+					return getRepo(model).then((repo) => repo.count(transformWhereClause(where)))
 				},
 				async update({ model, where, update: values }) {
 					debugLog("update", { model, where, values })
@@ -187,10 +203,12 @@ export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult
 				},
 				async updateMany({ model, where, update: values }) {
 					debugLog("updateMany", { model, where, values })
-					return getRepo(model).then(repo => repo.updateMany({
-						where: transformWhereClause(where),
-						set: values as Record<string, unknown>,
-					}))
+					return getRepo(model).then((repo) =>
+						repo.updateMany({
+							where: transformWhereClause(where),
+							set: values as Record<string, unknown>,
+						})
+					)
 				},
 				async delete({ model, where }) {
 					debugLog("delete", { model, where })
@@ -229,7 +247,7 @@ export function remultAdapter(remultOrDP: DataProvider | Remult | Promise<Remult
 				},
 				async deleteMany({ model, where }) {
 					debugLog("deleteMany", { model, where })
-					return getRepo(model).then(repo => repo.deleteMany({ where: transformWhereClause(where) }))
+					return getRepo(model).then((repo) => repo.deleteMany({ where: transformWhereClause(where) }))
 				},
 				options: adapterCfg,
 			}

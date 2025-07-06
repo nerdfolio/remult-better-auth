@@ -1,5 +1,5 @@
 import type { FieldAttribute, FieldType } from "better-auth/db"
-import { modelNameToClassName, RemultBetterAuthError } from "./utils"
+import { RemultBetterAuthError } from "./utils"
 
 export function remultIdField({ name = "id", useNumberId = false }: { name?: string; useNumberId?: boolean }) {
 	if (useNumberId) {
@@ -17,7 +17,10 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 
 export function transformField<T extends FieldType>(
 	modelName: string,
-	{ fieldName = "", type, required, unique, references, defaultValue }: FieldAttribute<T>
+	{ fieldName = "", type, required, unique, references, defaultValue }: FieldAttribute<T>,
+	{ getClassName }: {
+		getClassName: (modelName: string) => string
+	}
 ) {
 	if (!fieldName || !type) {
 		throw new RemultBetterAuthError(
@@ -83,8 +86,8 @@ export function transformField<T extends FieldType>(
 			throw new RemultBetterAuthError(`Model ${modelName} references a non-id field: ${JSON.stringify(references)}`)
 		}
 
-		const fromClass = modelNameToClassName(modelName)
-		const toClass = modelNameToClassName(references.model)
+		const fromClass = getClassName(modelName)
+		const toClass = getClassName(references.model)
 		field = `${field.trim()}
 		@Relations.toOne<${fromClass}, ${toClass}>(() => ${toClass}, "${references.field}")
 		${fieldName?.endsWith("Id") ? `${fieldName.slice(0, -2)}! : ${toClass}` : ""}

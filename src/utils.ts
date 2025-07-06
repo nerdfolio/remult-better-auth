@@ -15,11 +15,3 @@ export function trimLines(str: string, indentYN = false) {
 		.map((line) => (line.trim() ? indent + line.trim() : line.trim()))
 		.join("\n")
 }
-
-export function modelNameToClassName(modelName: string) {
-	return modelName.charAt(0).toUpperCase() + modelName.slice(1)
-}
-
-export function modelNameToPlural(modelName: string) {
-	return modelName + "s"
-}

@@ -1,12 +1,17 @@
-import type { BetterAuthOptions } from "better-auth"
+
 import type { BetterAuthDbSchema } from "better-auth/db"
 import { remultIdField, transformField } from "./transform-field"
-import { modelNameToClassName, modelNameToPlural, trimLines } from "./utils"
+import { trimLines } from "./utils"
 
 type ValueOf<T> = T[keyof T]
 type ModelSchema = ValueOf<BetterAuthDbSchema>
+type TransformSchemaOptions = {
+	useNumberId?: boolean
+	getClassName: (modelName: string) => string
+	getTableName: (modelName: string) => string
+}
 
-export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthOptions = {}) {
+export function transformSchema(tables: BetterAuthDbSchema, transformSchemaOptions: TransformSchemaOptions) {
 	return trimLines(`
 	import {Allow, Entity, Fields, Relations, Validators} from 'remult'
 
@@ -16,15 +21,14 @@ export function transformSchema(tables: BetterAuthDbSchema, options: BetterAuthO
 	`).replace("{{ENTITIES}}",
 		Object.values(tables).map(({ modelName, fields }) => transformModel({
 			modelName,
-			fields,
-			useNumberId: options.advanced?.database?.useNumberId
-		})).join("\n\n\n"))
+			fields
+		}, transformSchemaOptions)).join("\n\n\n"))
 }
 
-function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useNumberId?: boolean }) {
-	const className = modelNameToClassName(modelName)
+function transformModel({ modelName, fields }: ModelSchema, { useNumberId = false, getClassName, getTableName }: TransformSchemaOptions) {
+	const className = getClassName(modelName)
 	const entity = trimLines(`
-	@Entity<${className}>('${modelNameToPlural(modelName)}', ${generateEntityProps(modelName)})
+	@Entity<${className}>('${getTableName(modelName)}', ${generateEntityProps(modelName)})
 	export class ${className} {
 		{{FIELDS}}
 	}
@@ -35,14 +39,14 @@ function transformModel({ modelName, fields, useNumberId }: ModelSchema & { useN
 	// is a fieldName by using the field key.
 	const transformedFields = Object.entries(fields)
 		.map(([key, { fieldName, ...attrs }]) => ({ fieldName: fieldName ?? key, ...attrs })) // ensure there is a fieldName (some plugins don't define fully)
-		.map((f) => transformField(modelName, f))
+		.map((f) => transformField(modelName, f, { getClassName }))
 	const allFields = [remultIdField({ useNumberId })].concat(transformedFields)
 
 	return entity.replace("{{FIELDS}}", trimLines(allFields.join("\n\n"), true))
 }
 
 function generateEntityProps(modelName: string) {
-	if(modelName === 'user'){
+	if (['user', 'users'].includes(modelName)) {
 		return `{
 			// admin can do anything
 			allowApiCrud: Roles.admin,
@@ -51,7 +55,5 @@ function generateEntityProps(modelName: string) {
 		}`
 	}
 
-	return `{
-		allowApiCrud: Roles.admin
-	}`
+	return `{ allowApiCrud: Roles.admin }`
 }
