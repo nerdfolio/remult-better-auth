@@ -7,8 +7,8 @@ import { type ClassType, type DataProvider, InMemoryDataProvider, Remult, SqlDat
 import { TursoDataProvider } from "remult/remult-turso"
 import { JsonFileDataProvider } from "remult/server"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
+import { generateRemultSchema } from "./dev-generate-schema"
 import { remultAdapter } from "./remult-ba"
-import { generateRemultSchema } from "./remult-generate-schema"
 
 const TEST_OPTIONS: BetterAuthOptions = {
 	user: {
@@ -30,12 +30,12 @@ describe("remult-better-auth", async () => {
 
 	const schemaFile = await generateRemultSchema({
 		options: TEST_OPTIONS,
-		file: path.join(testDir, "test-schema.ts")
+		file: path.join(testDir, "test-schema.ts"),
 	})
 	const schemaFilePlural = await generateRemultSchema({
 		options: TEST_OPTIONS,
 		file: path.join(testDir, "test-schema-plural.ts"),
-		adapterOptions: { usePlural: true }
+		adapterOptions: { usePlural: true },
 	})
 
 	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
@@ -54,7 +54,11 @@ describe("remult-better-auth", async () => {
 	describe("memory db - usePlural", () => testSuite(testEntitiesPlural, initDatabaseProvider("memory", ""), true))
 })
 
-async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: DataProvider, usePlural = false) {
+async function testSuite(
+	authEntities: Record<string, ClassType<unknown>>,
+	dbProvider: DataProvider,
+	usePlural = false
+) {
 	const remult = new Remult(dbProvider)
 
 	const adapterFn = remultAdapter(remult.dataProvider, {
@@ -63,7 +67,7 @@ async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbPro
 			// If your adapter config allows passing in debug logs, then pass this here.
 			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
 		},
-		usePlural
+		usePlural,
 	})
 
 	beforeAll(async () => {
