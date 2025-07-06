@@ -40,7 +40,7 @@ export class Session {
   @Fields.date({required: true})
   expiresAt = new Date()
 
-  @Fields.string({required: true, validate: Validators.unique()})
+  @Fields.string({required: true, validate: Validators.unique(), allowApiUpdate: false})
   token = ''
 
   @Fields.createdAt({required: true, allowApiUpdate: false})
@@ -67,10 +67,10 @@ export class Account {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
 
-  @Fields.string({required: true})
+  @Fields.string({required: true, allowApiUpdate: false})
   accountId = ''
 
-  @Fields.string({required: true})
+  @Fields.string({required: true, allowApiUpdate: false})
   providerId = ''
 
   @Fields.string({required: true})
@@ -78,10 +78,10 @@ export class Account {
   @Relations.toOne<Account, User>(() => User, "id")
   user! : User
 
-  @Fields.string({required: false})
+  @Fields.string({required: false, allowApiUpdate: false})
   accessToken = ''
 
-  @Fields.string({required: false})
+  @Fields.string({required: false, allowApiUpdate: false})
   refreshToken = ''
 
   @Fields.string({required: false})
@@ -96,7 +96,7 @@ export class Account {
   @Fields.string({required: false})
   scope = ''
 
-  @Fields.string({required: false})
+  @Fields.string({required: false, allowApiUpdate: false})
   password = ''
 
   @Fields.createdAt({required: true, allowApiUpdate: false})
