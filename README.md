@@ -95,8 +95,8 @@ return betterAuth({
 
 Adapter Options:
 The second argument is options for the adapter. Beside `authEntities`, there are also:
-- `debugLogs`: optional, defaults => false. When true the adapter will output what better-auth passes to it
-- `usePlural`: optional. defautls => false. When true, the generated table names will be pluralized, e.g. `users`, `accounts`
+- `debugLogs`: optional, default => false. When true the adapter will output what better-auth passes to it
+- `usePlural`: optional. default => false. When true, the generated table names will be pluralized, e.g. `users`, `accounts`
 
 
 > [!TIP]
