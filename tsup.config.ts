@@ -12,11 +12,4 @@ const libCfg = {
 	},
 } satisfies Options
 
-const cliCfg = {
-	...libCfg,
-	entry: ["src/cli.ts"],
-	format: "esm",
-	dts: false
-} satisfies Options
-
-export default defineConfig([libCfg, cliCfg])
+export default defineConfig(libCfg)
