@@ -1,12 +1,21 @@
 import { writeFile } from "node:fs/promises"
 import { type BetterAuthOptions, logger } from "better-auth"
 import { Remult } from "remult"
-import { remultAdapter } from "./remult-ba"
+import { type RemultAdapterOptions, remultAdapter } from "./remult-ba"
 
-export async function generateRemultSchema({ options, file }: { options: BetterAuthOptions; file: string }) {
+export async function generateRemultSchema({
+	options,
+	file,
+	adapterOptions = {},
+}: {
+	options: BetterAuthOptions
+	file: string
+	adapterOptions?: Omit<RemultAdapterOptions, "authEntities">
+}) {
 	const adapter = remultAdapter(new Remult(), {
 		// for schema generation, we don't need to declare entities.
 		authEntities: {},
+		...adapterOptions
 	})(options)
 
 	if (!adapter.createSchema) {
