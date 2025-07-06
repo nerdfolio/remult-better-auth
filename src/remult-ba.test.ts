@@ -28,19 +28,33 @@ describe("remult-better-auth", async () => {
 	}
 	mkdirSync(testDir, { recursive: true })
 
-	const schemaFile = await generateRemultSchema({ options: TEST_OPTIONS, file: path.join(testDir, "test-schema.ts") })
+	const schemaFile = await generateRemultSchema({
+		options: TEST_OPTIONS,
+		file: path.join(testDir, "test-schema.ts")
+	})
+	const schemaFilePlural = await generateRemultSchema({
+		options: TEST_OPTIONS,
+		file: path.join(testDir, "test-schema-plural.ts"),
+		adapterOptions: { usePlural: true }
+	})
+
 	const testEntities: Record<string, ClassType<unknown>> = await import(schemaFile)
+	const testEntitiesPlural: Record<string, ClassType<unknown>> = await import(schemaFilePlural)
 
 	afterAll(async () => {
 		rmSync(testDir, { recursive: true })
 	})
 
+	// singular schema tests
 	describe("memory db", () => testSuite(testEntities, initDatabaseProvider("memory", "")))
 	describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
 	describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
+
+	// plural schema tests
+	describe("memory db - usePlural", () => testSuite(testEntitiesPlural, initDatabaseProvider("memory", ""), true))
 })
 
-async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: DataProvider) {
+async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbProvider: DataProvider, usePlural = false) {
 	const remult = new Remult(dbProvider)
 
 	const adapterFn = remultAdapter(remult.dataProvider, {
@@ -49,6 +63,7 @@ async function testSuite(authEntities: Record<string, ClassType<unknown>>, dbPro
 			// If your adapter config allows passing in debug logs, then pass this here.
 			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
 		},
+		usePlural
 	})
 
 	beforeAll(async () => {
