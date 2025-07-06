@@ -16,7 +16,7 @@ export interface RemultAdapterOptions {
 	 * Whether to use plural names for the auth tables
 	 * @default false
 	 */
-	usePlural: boolean
+	usePlural?: boolean
 }
 
 /**
