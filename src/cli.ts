@@ -33,6 +33,9 @@ async function getBetterAuthOptions(configFile?: string) {
 
 		const { user, account, session, verification, database, plugins } = options
 		return Object.fromEntries(
+			// NOTE: if we continue developing this cli, we need to either instantiate our adapter from the `database`
+			// option or extract its settings somehow. Currently, adapter config settings like `usePlural` would have
+			// no effect .. all the more reason to just use @better-auth/cli
 			Object.entries({ user, account, session, verification, database, plugins })
 				.filter(([_k, v]) => typeof v !== 'undefined')
 		) satisfies BetterAuthOptions

@@ -2,7 +2,7 @@ import {Allow, Entity, Fields, Relations, Validators} from 'remult'
 
 const Roles = { admin: "admin" }
 
-@Entity<User>('user', {
+@Entity<User>('users', {
 // admin can do anything
 allowApiCrud: Roles.admin,
 // Any one can read
@@ -32,7 +32,7 @@ export class User {
 }
 
 
-@Entity<Session>('session', { allowApiCrud: Roles.admin })
+@Entity<Session>('sessions', { allowApiCrud: Roles.admin })
 export class Session {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
@@ -62,7 +62,7 @@ export class Session {
 }
 
 
-@Entity<Account>('account', { allowApiCrud: Roles.admin })
+@Entity<Account>('accounts', { allowApiCrud: Roles.admin })
 export class Account {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
@@ -107,7 +107,7 @@ export class Account {
 }
 
 
-@Entity<Verification>('verification', { allowApiCrud: Roles.admin })
+@Entity<Verification>('verifications', { allowApiCrud: Roles.admin })
 export class Verification {
   @Fields.string({required: true, minLength: 8, maxLength: 40, validate: Validators.unique(), allowApiUpdate: false})
   id! : string
