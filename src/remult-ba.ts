@@ -1,6 +1,6 @@
 import { capitalizeFirstLetter } from "better-auth"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type ErrorInfo, Remult, type Repository, SqlDatabase, withRemult } from "remult"
+import { type ClassType, DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase, withRemult } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
@@ -20,7 +20,11 @@ export interface RemultAdapterOptions {
 	 */
 	usePlural?: boolean
 
-	remult?: Remult
+	/**
+	 * If you want to use a different data provider
+	 * You can give it explicitly here. Could be useful for testing.
+	 */
+	dataProvider?: DataProvider
 }
 
 /**
@@ -36,7 +40,7 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 
 	async function getRepo(modelName: string) {
 		return await withRemult(async (localRemult) => {
-			const remult = adapterCfg.remult ?? localRemult
+			const remult = adapterCfg.dataProvider ? new Remult(adapterCfg.dataProvider) : localRemult
 			if (!authRepos) {
 				authRepos = Object.fromEntries(
 					Object.values(adapterCfg.authEntities)
