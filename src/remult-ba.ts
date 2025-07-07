@@ -1,7 +1,6 @@
-import { isPromise } from "node:util/types"
 import { capitalizeFirstLetter } from "better-auth"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase } from "remult"
+import { type ClassType, type ErrorInfo, Remult, type Repository, SqlDatabase, withRemult } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
@@ -20,48 +19,39 @@ export interface RemultAdapterOptions {
 	 * @default false
 	 */
 	usePlural?: boolean
+
+	remult?: Remult
 }
 
 /**
  * Create a BetterAuth adapter for Remult.
  *
- * @param remultOrDP - instance of DataProvider or Remult
  * @param adapterCfg - configuration for the adapter
  * @returns a BetterAuth adapter creating function, e.g. (options: BetterAuthOptions) => Adapter
  *
  */
-export function remultAdapter(
-	remultOrDP: DataProvider | Remult | Promise<Remult | DataProvider>,
-	adapterCfg: RemultAdapterOptions
-) {
+export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 	type IdType = string | number
-	let remult: Remult
 	let authRepos: Record<string, Repository<unknown>>
 
 	async function getRepo(modelName: string) {
-		if (!remult) {
-			const resolved = isPromise(remultOrDP) ? await remultOrDP : remultOrDP
-			// remult = resolved instanceof Remult ? resolved : new Remult(resolved)
-			// NOTE: the instanceof check above is not reliable. When esm code is mixed with cjs during bundling
-			// that check returns false even though resolved was obtained via api.getRemult() thus is a Remult instance.
-			// We work around it with check for the dataProvider member
-			remult = "dataProvider" in resolved ? resolved : new Remult(resolved)
-		}
-
-		if (!authRepos) {
-			authRepos = Object.fromEntries(
-				Object.values(adapterCfg.authEntities)
-					.map((entityClass) => remult.repo(entityClass))
-					.map((repo) => [repo.metadata.key, repo])
-			)
-		}
-		const repo = authRepos[modelName]
-		if (!repo) {
-			throw new RemultBetterAuthError(
-				`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth configuration.`
-			)
-		}
-		return repo
+		return await withRemult(async (localRemult) => {
+			const remult = adapterCfg.remult ?? localRemult
+			if (!authRepos) {
+				authRepos = Object.fromEntries(
+					Object.values(adapterCfg.authEntities)
+						.map((entityClass) => remult.repo(entityClass))
+						.map((repo) => [repo.metadata.key, repo])
+				)
+			}
+			const repo = authRepos[modelName]
+			if (!repo) {
+				throw new RemultBetterAuthError(
+					`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth configuration.`
+				)
+			}
+			return repo
+		})
 	}
 
 	async function findIdWhere(modelRepo: Repository<unknown>, where: CleanedWhere[]) {

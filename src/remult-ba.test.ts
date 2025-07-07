@@ -61,13 +61,14 @@ async function testSuite(
 ) {
 	const remult = new Remult(dbProvider)
 
-	const adapterFn = remultAdapter(remult.dataProvider, {
+	const adapterFn = remultAdapter( {
 		authEntities,
 		debugLogs: {
 			// If your adapter config allows passing in debug logs, then pass this here.
 			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
 		},
 		usePlural,
+		remult,
 	})
 
 	beforeAll(async () => {

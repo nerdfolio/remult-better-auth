@@ -86,7 +86,7 @@ import { api } from "~/api"
 import { User, Account, Session, Verification } from "./src/auth-schema" // generated via the cli
 
 return betterAuth({
-	database: remultAdapter(api.getRemult(), {
+	database: remultAdapter({
 		authEntities: {User, Account, Session, Verification},
 	}),
 	...anyOtherBetterAuthOptions
