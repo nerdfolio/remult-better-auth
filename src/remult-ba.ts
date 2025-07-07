@@ -1,6 +1,6 @@
 import { capitalizeFirstLetter } from "better-auth"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase, withRemult } from "remult"
+import { type ClassType, type DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase, withRemult } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
