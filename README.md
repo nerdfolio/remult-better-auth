@@ -94,12 +94,6 @@ return betterAuth({
 ```
 
 Adapter Options:
-The second argument is options for the adapter. Beside `authEntities`, there are also:
+- `authEntities`: on initial entity generation, use `{}`. Afterwards, use this to point to your auth entities.
 - `debugLogs`: optional, default => false. When true the adapter will output what better-auth passes to it
 - `usePlural`: optional. default => false. When true, the generated table names will be pluralized, e.g. `users`, `accounts`
-
-
-> [!TIP]
-> The `remultAdapter` function accepts a remult instance, a data provider instance, or their Promise-wrapped version.
->
-> When you define `getUser` using `auth` as above, there is a "compile-time" (but not run-time) circular dependency between `api.ts` and `auth.ts`. If this is not to your liking, you can also define a dataProvider separately, then use it to define api and auth.
