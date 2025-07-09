@@ -9,7 +9,7 @@ export const auth = betterAuth({
 			email: "email_address",
 		},
 	},
-	database: remultAdapter(new InMemoryDataProvider(), {
+	database: remultAdapter({
 		// no need to declare entities when we're generating them
 		authEntities: {},
 		usePlural: true

@@ -56,18 +56,19 @@ describe("remult-better-auth", async () => {
 
 async function testSuite(
 	authEntities: Record<string, ClassType<unknown>>,
-	dbProvider: DataProvider,
+	dataProvider: DataProvider,
 	usePlural = false
 ) {
-	const remult = new Remult(dbProvider)
+	const remult = new Remult(dataProvider)
 
-	const adapterFn = remultAdapter(remult.dataProvider, {
+	const adapterFn = remultAdapter( {
 		authEntities,
 		debugLogs: {
 			// If your adapter config allows passing in debug logs, then pass this here.
 			isRunningAdapterTests: true, // This is our super secret flag to let us know to only log debug logs if a test fails.
 		},
 		usePlural,
+		dataProvider,
 	})
 
 	beforeAll(async () => {
