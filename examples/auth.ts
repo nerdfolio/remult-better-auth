@@ -1,5 +1,4 @@
 import { betterAuth } from "better-auth"
-import { InMemoryDataProvider } from "remult"
 import { remultAdapter } from "../src"
 
 export const auth = betterAuth({
