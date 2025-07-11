@@ -88,6 +88,7 @@ import { User, Account, Session, Verification } from "./src/auth-schema" // gene
 return betterAuth({
 	database: remultAdapter({
 		authEntities: {User, Account, Session, Verification},
+		dataProvider: api.getRemult().then(r => r.dataProvider)
 	}),
 	...anyOtherBetterAuthOptions
 })
@@ -97,5 +98,8 @@ Adapter Options:
 - `authEntities`: on initial entity generation, use `{}`. Afterwards, use this to point to your auth entities.
 - `debugLogs`: optional, default => false. When true the adapter will output what better-auth passes to it
 - `usePlural`: optional. default => false. When true, the generated table names will be pluralized, e.g. `users`, `accounts`
-- `remult`: optional. Can be of type `Remult | Promise<Remult>`. Useful when the api is defined with custom options that we can give directly to the adapter. By default, the adapter will use `withRemult`.
-- `dataProvider` optional. Specify an alternate data provider for this adapter
+- `dataProvider` optional. Specify an alternate data provider for this adapter. You may also want to pass this from your api definition to ensure the custom data provider is used instead of the default.
+
+> [!NOTE]
+> There may be situations where the configuration of better-auth and this adapter runs before your remult api configuration.
+In those cases, you'll end up with the default dataProvider instead of the one you intended. Even though `dataProvider` is optional, it's better to pass in the provider you used for your remult api.

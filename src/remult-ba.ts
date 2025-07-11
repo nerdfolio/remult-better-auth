@@ -5,7 +5,6 @@ import {
 	type ClassType,
 	type DataProvider,
 	type ErrorInfo,
-	type Remult,
 	type Repository,
 	SqlDatabase,
 	withRemult,
@@ -30,11 +29,9 @@ export interface RemultAdapterOptions {
 	usePlural?: boolean
 
 	/**
-	 * If you want to use a different data provider or remult instance,
-	 * you can give it explicitly here. Could be useful for testing.
+	 * If you want to use a different data provider, you can give it explicitly here.
 	 */
 	dataProvider?: DataProvider | Promise<DataProvider>
-	remult?: Remult | Promise<Remult>
 }
 
 /**
@@ -50,25 +47,15 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 
 	async function getRepo(modelName: string) {
 		if (!authRepos) {
-			const remult = await (async () => {
-				if (adapterCfg.remult) {
-					return adapterCfg.remult
-				}
-
-				return await withRemult(
-					async (localRemult) => localRemult,
-					{ dataProvider: adapterCfg.dataProvider }
-				)
-			})()
-
-			if (adapterCfg.debugLogs) {
-				console.log("remult api url", JSON.stringify(remult.apiClient.url))
-			}
-
-			authRepos = Object.fromEntries(
-				Object.values(adapterCfg.authEntities)
-					.map((entityClass) => remult.repo(entityClass))
-					.map((repo) => [repo.metadata.key, repo])
+			authRepos = await withRemult(
+				async (localRemult) => {
+					return Object.fromEntries(
+						Object.values(adapterCfg.authEntities)
+							.map((entityClass) => localRemult.repo(entityClass))
+							.map((repo) => [repo.metadata.key, repo])
+					)
+				},
+				{ dataProvider: adapterCfg.dataProvider }
 			)
 		}
 
