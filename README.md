@@ -97,3 +97,5 @@ Adapter Options:
 - `authEntities`: on initial entity generation, use `{}`. Afterwards, use this to point to your auth entities.
 - `debugLogs`: optional, default => false. When true the adapter will output what better-auth passes to it
 - `usePlural`: optional. default => false. When true, the generated table names will be pluralized, e.g. `users`, `accounts`
+- `remult`: optional. Can be of type `Remult | Promise<Remult>`. Useful when the api is defined with custom options that we can give directly to the adapter. By default, the adapter will use `withRemult`.
+- `dataProvider` optional. Specify an alternate data provider for this adapter

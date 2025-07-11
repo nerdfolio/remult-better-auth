@@ -1,6 +1,15 @@
+
 import { capitalizeFirstLetter } from "better-auth"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
-import { type ClassType, type DataProvider, type ErrorInfo, Remult, type Repository, SqlDatabase, withRemult } from "remult"
+import {
+	type ClassType,
+	type DataProvider,
+	type ErrorInfo,
+	type Remult,
+	type Repository,
+	SqlDatabase,
+	withRemult,
+} from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
 import { RemultBetterAuthError } from "./utils"
@@ -21,10 +30,11 @@ export interface RemultAdapterOptions {
 	usePlural?: boolean
 
 	/**
-	 * If you want to use a different data provider
-	 * You can give it explicitly here. Could be useful for testing.
+	 * If you want to use a different data provider or remult instance,
+	 * you can give it explicitly here. Could be useful for testing.
 	 */
-	dataProvider?: DataProvider
+	dataProvider?: DataProvider | Promise<DataProvider>
+	remult?: Remult | Promise<Remult>
 }
 
 /**
@@ -39,23 +49,36 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 	let authRepos: Record<string, Repository<unknown>>
 
 	async function getRepo(modelName: string) {
-		return await withRemult(async (localRemult) => {
-			const remult = adapterCfg.dataProvider ? new Remult(adapterCfg.dataProvider) : localRemult
-			if (!authRepos) {
-				authRepos = Object.fromEntries(
-					Object.values(adapterCfg.authEntities)
-						.map((entityClass) => remult.repo(entityClass))
-						.map((repo) => [repo.metadata.key, repo])
+		if (!authRepos) {
+			const remult = await (async () => {
+				if (adapterCfg.remult) {
+					return adapterCfg.remult
+				}
+
+				return await withRemult(
+					async (localRemult) => localRemult,
+					{ dataProvider: adapterCfg.dataProvider }
 				)
+			})()
+
+			if (adapterCfg.debugLogs) {
+				console.log("remult api url", JSON.stringify(remult.apiClient.url))
 			}
-			const repo = authRepos[modelName]
-			if (!repo) {
-				throw new RemultBetterAuthError(
-					`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth configuration.`
-				)
-			}
-			return repo
-		})
+
+			authRepos = Object.fromEntries(
+				Object.values(adapterCfg.authEntities)
+					.map((entityClass) => remult.repo(entityClass))
+					.map((repo) => [repo.metadata.key, repo])
+			)
+		}
+
+		const repo = authRepos[modelName]
+		if (!repo) {
+			throw new RemultBetterAuthError(
+				`Model "${modelName}" not found. Check your "authEntities" in remult-better-auth configuration.`
+			)
+		}
+		return repo
 	}
 
 	async function findIdWhere(modelRepo: Repository<unknown>, where: CleanedWhere[]) {
