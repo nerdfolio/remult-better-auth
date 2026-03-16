@@ -1,5 +1,4 @@
 
-import { capitalizeFirstLetter } from "better-auth"
 import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import {
 	type ClassType,
@@ -93,7 +92,10 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 							// so technically, we don't need to call getDefaultModel name here.
 							// That said, this may be a bug because it's inconsistent with the convention for methods other than `transformSchema`,
 							// where `modelName` is the potentially pluralized form and defaultModelName is the singular original form
-							getClassName: (modelName) => capitalizeFirstLetter(getDefaultModelName(modelName)),
+							getClassName: (modelName) => {
+								const name = getDefaultModelName(modelName)
+								return name.charAt(0).toUpperCase() + name.slice(1)
+							},
 							getTableName: getModelName, // the table name that may be in plural form (depends on usePlural)
 						}),
 						path: file ?? DEFAULT_CREATE_SCHEMA_OUTPUT,
