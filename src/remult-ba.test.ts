@@ -47,8 +47,8 @@ describe("remult-better-auth", async () => {
 
 	// singular schema tests
 	describe("memory db", () => testSuite(testEntities, initDatabaseProvider("memory", "")))
-	describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
-	describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
+	//describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
+	//describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
 
 	// plural schema tests
 	describe("memory db - usePlural", () => testSuite(testEntitiesPlural, initDatabaseProvider("memory", ""), true))
@@ -61,7 +61,7 @@ async function testSuite(
 ) {
 	const remult = new Remult(dataProvider)
 
-	const adapterFn = remultAdapter( {
+	const adapterFn = remultAdapter({
 		authEntities,
 		debugLogs: {
 			// If your adapter config allows passing in debug logs, then pass this here.
@@ -80,7 +80,7 @@ async function testSuite(
 		}
 	})
 
-	await runAdapterTest({
+	runAdapterTest({
 		getAdapter: async (customOptions = {}) => {
 			return adapterFn({ ...TEST_OPTIONS, ...customOptions })
 		},

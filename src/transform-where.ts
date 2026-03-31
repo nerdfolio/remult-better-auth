@@ -37,7 +37,7 @@ function transformWhereOp({
 	value,
 	field,
 }: CleanedWhere): [string, typeof value | { [key: string]: typeof value }] {
-	const op = operator === "starts_with" ? "startsWith" : operator === "ends_with" ? "endsWith" : operator
+	const op = operator === "starts_with" ? "startsWith" : operator === "ends_with" ? "endsWith" : operator === "not_in" ? "nin" : operator
 
 	switch (op) {
 		case "eq":
@@ -48,12 +48,13 @@ function transformWhereOp({
 		case "gt":
 		case "gte":
 		case "in":
+		case "nin":
 		case "contains":
 		case "startsWith":
 		case "endsWith":
 			// $ne, $lt, $lte, $gt, $gte, $in, $contains, $startsWith, $endsWith
 			return [field, { [`$${op}`]: value }]
 		default:
-			throw new RemultBetterAuthError(`Unknown operator in better-auth where clause: ${JSON.stringify({ operator, value, field })}`)
+			throw new RemultBetterAuthError(`Unknown operator in where clause from better-auth: ${JSON.stringify({ operator, value, field })}`)
 	}
 }
