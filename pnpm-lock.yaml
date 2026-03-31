@@ -21,8 +21,8 @@ importers:
         specifier: ^1.4.19
         version: 1.4.19(vitest@3.2.4(@types/node@24.0.10)(jiti@2.4.2)(tsx@4.20.3))
       remult:
-        specifier: ^3.3.6
-        version: 3.3.6
+        specifier: ^3.3.4
+        version: 3.3.4
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(jiti@2.4.2)(postcss@8.5.6)(tsx@4.20.3)(typescript@5.8.3)
@@ -893,8 +893,8 @@ packages:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
 
-  remult@3.3.6:
-    resolution: {integrity: sha512-t8uXSYVtqZJ8CR0Bqs3UkMOgDuXwkSybmQc8yRxescFtxz1h9jYCBY8k7AKlpaihvaWGonpbP82/QNLLEF7WLQ==}
+  remult@3.3.4:
+    resolution: {integrity: sha512-l0asHI64ecYdXnnEcwfOA5nl2OmcQ1wWYO9HjeTszPdr6XVf/o55vvD0MUwOH/qx9E6YwNE8FXlzRG4EYNg5sg==}
 
   resolve-from@5.0.0:
     resolution: {integrity: sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==}
@@ -1822,7 +1822,7 @@ snapshots:
 
   readdirp@4.1.2: {}
 
-  remult@3.3.6:
+  remult@3.3.4:
     dependencies:
       tslib: 2.8.1
 
