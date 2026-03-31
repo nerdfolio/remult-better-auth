@@ -15,38 +15,14 @@ export function transformWhereClause(where: CleanedWhere[] = []) {
 		}
 	})
 
-	const whereClause = Object.fromEntries(conditions.or.length ? [["$or", conditions.or.map((cond) => ({ [cond[0]]: cond[1] }))]] : conditions.and as [string, unknown][])
-	console.warn("transformWhereClause", where, "whereClause", whereClause)
-	return whereClause
+	if (conditions.or.length && conditions.and.length) {
+		// The assumption here is that better-auth's usage of remult is simple.
+		// As of better-auth v1.4.19 that is true. Prob will remain true from the type definition of CleanedWhere.
+		// Throwing an error here to alert us just in case
+		throw new RemultBetterAuthError("Mixed AND/OR conditions in where clause from better-auth is not supported")
+	}
 
-	// const entries = where.map((w) => {
-	// 	if (w.connector === "AND") {
-	// 		return transformWhereOp(w)
-	// 	}
-
-	// 	if (w.connector === "OR") {
-	// 		// This situation does not show up in adapter tests. Just log it if it comes up to see
-	// 		// realistic data points
-	// 		//console.warn("OR", w)
-	// 		const [opKey, opValue] = transformWhereOp(w)
-	// 		const convertedW = ["$or", [{ [opKey]: opValue }]]
-	// 		//console.warn("transformWhereClause", where, "w", w, "convertedW", convertedW)
-	// 		return convertedW
-	// 	}
-
-	// 	if (w.operator) {
-	// 		// This situation does not show up in adapter tests. Just log it if it comes up to see
-	// 		// realistic data points
-	// 		console.warn("Where with op only", w)
-	// 		return transformWhereOp(w)
-	// 	}
-
-	// 	throw new RemultBetterAuthError(`Unimplemented scenario for where clause: ${JSON.stringify(w)}`)
-	// })
-	//
-	// const whereClause = Object.fromEntries(entries as [string, unknown][])
-	// console.warn("transformWhereClause", where, "whereClause", whereClause)
-	// return whereClause
+	return Object.fromEntries(conditions.or.length ? [["$or", conditions.or.map((cond) => ({ [cond[0]]: cond[1] }))]] : conditions.and as [string, unknown][])
 }
 
 function transformWhereOp({

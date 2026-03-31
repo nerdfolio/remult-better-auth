@@ -47,8 +47,8 @@ describe("remult-better-auth", async () => {
 
 	// singular schema tests
 	describe("memory db", () => testSuite(testEntities, initDatabaseProvider("memory", "")))
-	//describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
-	//describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
+	describe("json db", () => testSuite(testEntities, initDatabaseProvider("json", testDir)))
+	describe("sqlite db", () => testSuite(testEntities, initDatabaseProvider("sqlite", testDir)))
 
 	// plural schema tests
 	describe("memory db - usePlural", () => testSuite(testEntitiesPlural, initDatabaseProvider("memory", ""), true))
@@ -102,8 +102,9 @@ async function testSuite(
 	})
 
 	test("findMany no limit, has offset", async () => {
-		const res = await adapterFn({}).findMany({ model: "user", offset: 3 })
-		expect(res).toHaveLength(4)
+		const resNoOffset = await adapterFn({}).findMany({ model: "user" })
+		const resWithOffset = await adapterFn({}).findMany({ model: "user", offset: 3 })
+		expect(resWithOffset).toHaveLength(resNoOffset.length - 3)
 	})
 }
 

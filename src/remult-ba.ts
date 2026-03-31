@@ -126,14 +126,15 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 					}
 
 					if (!(modelRepo.metadata.options.dataProvider instanceof SqlDatabase)) {
+						console.log("1. OFFSet", offset, "limit", limit, "where", where)
 						//
 						// For non-sql providers, such as Json file, we have to fallback to grabbing a bigger chunk
 						// than required, then slice it to the requested limit
 						//
 						if (limit > offset) {
 							// example: limit 10, offset 3
-							// Because repo.find() only give us limit+page, we have to do this lame fallback grab limit+offset
-							// and use slice to do the skipping
+							// Because repo.find() only give us limit & page as params, we have to do this lame fallback grab
+							// limit+offset and use slice to do the skipping
 							const rows = (await modelRepo.find({
 								where: transformedWhere,
 								orderBy,
