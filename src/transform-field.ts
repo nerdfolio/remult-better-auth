@@ -1,4 +1,4 @@
-import type { FieldAttribute, FieldType } from "better-auth/db"
+import type { DBFieldAttribute, DBFieldType } from "better-auth/db"
 import { RemultBetterAuthError } from "./utils"
 
 export function remultIdField({ name = "id", useNumberId = false }: { name?: string; useNumberId?: boolean }) {
@@ -15,9 +15,9 @@ export function remultIdField({ name = "id", useNumberId = false }: { name?: str
 		${name}! : string`.trim()
 }
 
-export function transformField<T extends FieldType>(
+export function transformField<T extends DBFieldType>(
 	modelName: string,
-	{ fieldName = "", type, required, unique, references, defaultValue }: FieldAttribute<T>,
+	{ fieldName = "", type, required, unique, references, defaultValue }: DBFieldAttribute<T>,
 	{ getClassName }: {
 		getClassName: (modelName: string) => string
 	}
@@ -109,7 +109,7 @@ export function transformField<T extends FieldType>(
 // 	return undefined
 // }
 
-function transformValidators({ type, unique, fieldName }: { type: FieldType; unique?: boolean; fieldName?: string }) {
+function transformValidators({ type, unique, fieldName }: { type: DBFieldType; unique?: boolean; fieldName?: string }) {
 	const v = [
 		unique ? "Validators.unique()" : undefined,
 		type === "string" && fieldName === "email" ? "Validators.email()" : undefined,
@@ -118,7 +118,7 @@ function transformValidators({ type, unique, fieldName }: { type: FieldType; uni
 	return v.length > 1 ? `[${v.join(", ")}]` : v.length === 1 ? v[0] : undefined
 }
 
-function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["defaultValue"] }) {
+function transformDefaultVal({ defaultValue }: { defaultValue?: DBFieldAttribute["defaultValue"] }) {
 	// remult defaultValue is a function so transform if needed
 	return typeof defaultValue === "function"
 		? `${defaultValue.toString().replace(/\/\*.*\*\//, "")}`
@@ -128,7 +128,7 @@ function transformDefaultVal({ defaultValue }: { defaultValue?: FieldAttribute["
 }
 
 
-function transformFieldProps({ required, defaultValue, type, unique, fieldName = "" }: FieldAttribute): string {
+function transformFieldProps({ required, defaultValue, type, unique, fieldName = "" }: DBFieldAttribute): string {
 	function shouldAllowApiUpdate() {
 		if (type === "date" && ["createdAt", "updatedAt"].includes(fieldName)) return false
 

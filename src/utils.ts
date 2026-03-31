@@ -2,7 +2,7 @@ import { BetterAuthError } from "better-auth"
 
 export class RemultBetterAuthError extends BetterAuthError {
 	constructor(message: string, cause?: string) {
-		super(message, cause)
+		super(message, { cause })
 		this.name = "RemultBetterAuthError"
 	}
 }
@@ -14,4 +14,8 @@ export function trimLines(str: string, indentYN = false) {
 		.split("\n")
 		.map((line) => (line.trim() ? indent + line.trim() : line.trim()))
 		.join("\n")
+}
+
+export function capitalizeFirstLetter(str: string) {
+	return str.charAt(0).toUpperCase() + str.slice(1)
 }

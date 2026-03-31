@@ -1,16 +1,13 @@
-
-import { type AdapterDebugLogs, type CleanedWhere, type CustomAdapter, createAdapter } from "better-auth/adapters"
 import {
-	type ClassType,
-	type DataProvider,
-	type ErrorInfo,
-	type Repository,
-	SqlDatabase,
-	withRemult,
-} from "remult"
+	type CleanedWhere,
+	type CustomAdapter,
+	createAdapterFactory,
+	type DBAdapterDebugLogOption,
+} from "better-auth/adapters"
+import { type ClassType, type DataProvider, type ErrorInfo, type Repository, SqlDatabase, withRemult } from "remult"
 import { transformSchema } from "./transform-model"
 import { transformWhereClause } from "./transform-where"
-import { RemultBetterAuthError } from "./utils"
+import { capitalizeFirstLetter, RemultBetterAuthError } from "./utils"
 
 const DEFAULT_CREATE_SCHEMA_OUTPUT = "./auth-schema.ts" as const
 
@@ -20,7 +17,7 @@ export interface RemultAdapterOptions {
 	 * Enable debug logs for the adapter
 	 * @default false
 	 */
-	debugLogs?: AdapterDebugLogs
+	debugLogs?: DBAdapterDebugLogOption
 	/**
 	 * Whether to use plural names for the auth tables
 	 * @default false
@@ -72,7 +69,7 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 		return id
 	}
 
-	return createAdapter({
+	return createAdapterFactory({
 		config: {
 			adapterId: "remult",
 			adapterName: "Remult BetterAuth Adapter",
@@ -87,15 +84,12 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 					debugLog("createSchema", { file, tables })
 					return {
 						code: transformSchema(tables, {
-							useNumberId: options.advanced?.database?.useNumberId,
+							useNumberId: options.advanced?.database?.generateId === "serial",
 							// NOTE: 7/5/2025 - better-auth passes us tables with model names in singular form (defaultModelName)
 							// so technically, we don't need to call getDefaultModel name here.
 							// That said, this may be a bug because it's inconsistent with the convention for methods other than `transformSchema`,
 							// where `modelName` is the potentially pluralized form and defaultModelName is the singular original form
-							getClassName: (modelName) => {
-								const name = getDefaultModelName(modelName)
-								return name.charAt(0).toUpperCase() + name.slice(1)
-							},
+							getClassName: (modelName) => capitalizeFirstLetter(getDefaultModelName(modelName)),
 							getTableName: getModelName, // the table name that may be in plural form (depends on usePlural)
 						}),
 						path: file ?? DEFAULT_CREATE_SCHEMA_OUTPUT,

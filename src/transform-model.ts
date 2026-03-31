@@ -1,17 +1,17 @@
 
-import type { BetterAuthDbSchema } from "better-auth/db"
+import type { BetterAuthDBSchema } from "better-auth/db"
 import { remultIdField, transformField } from "./transform-field"
 import { trimLines } from "./utils"
 
 type ValueOf<T> = T[keyof T]
-type ModelSchema = ValueOf<BetterAuthDbSchema>
+type ModelSchema = ValueOf<BetterAuthDBSchema>
 type TransformSchemaOptions = {
 	useNumberId?: boolean
 	getClassName: (modelName: string) => string
 	getTableName: (modelName: string) => string
 }
 
-export function transformSchema(tables: BetterAuthDbSchema, transformSchemaOptions: TransformSchemaOptions) {
+export function transformSchema(tables: BetterAuthDBSchema, transformSchemaOptions: TransformSchemaOptions) {
 	return trimLines(`
 	import {Allow, Entity, Fields, Relations, Validators} from 'remult'
 
