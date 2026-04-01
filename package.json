@@ -40,17 +40,17 @@
 		"pnpm": ">=10"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.0.6",
-		"@libsql/client": "^0.15.9",
-		"@types/node": "^24.0.10",
-		"better-auth": "^1.4.19",
-		"remult": "^3.3.4",
-		"tsup": "^8.5.0",
-		"tsx": "^4.20.3",
+		"@biomejs/biome": "^2.4.10",
+		"@libsql/client": "^0.17.2",
+		"@types/node": "^25.5.0",
+		"better-auth": "^1.4.22",
+		"remult": "^3.3.6",
+		"tsup": "^8.5.1",
+		"tsx": "^4.21.0",
 		"vitest": "^3.2.4"
 	},
 	"peerDependencies": {
-		"better-auth": "^1.4.19",
-		"remult": "^3.3.5"
+		"better-auth": "^1.4.22",
+		"remult": "^3.3.6"
 	}
 }
