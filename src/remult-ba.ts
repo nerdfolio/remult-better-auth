@@ -111,6 +111,15 @@ export function remultAdapter(adapterCfg: RemultAdapterOptions) {
 							}) as Promise<T>
 					)
 				},
+				// better-auth >= 1.7 consumes single-use tokens with this; its built-in fallback rejects entity instances
+				async consumeOne<T>({ model, where }: Parameters<NonNullable<CustomAdapter["consumeOne"]>>[0]) {
+					debugLog("consumeOne", { model, where })
+					const modelRepo = (await getRepo(model)) as Repository<{ id: IdType }>
+					const row = await modelRepo.findOne({ where: transformWhereClause(where) })
+					if (!row) return null
+					const deleted = await modelRepo.deleteMany({ where: { id: row.id } })
+					return deleted === 1 ? ({ ...row } as T) : null
+				},
 				async findMany<T>({ model, where, sortBy, limit, offset }: Parameters<CustomAdapter["findMany"]>[0]) {
 					debugLog("findMany", { model, where, sortBy, limit, offset })
 					const modelRepo = await getRepo(model)
